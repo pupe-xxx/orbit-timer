@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!--PWA-->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06070c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ORBIT">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<!--/PWA-->
+<title>ORBIT Timer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen instrument. Mode rail on top, an orbital dial in the middle (ring = time left, orbs = rounds/sets), thumb-zone controls at the bottom. */
+@property --p  { syntax: "<color>"; inherits: true; initial-value: #a995ff; }
+@property --p2 { syntax: "<color>"; inherits: true; initial-value: #5fe3ff; }
+:root{
+  --bg:#06070c; --surface:#0f121c; --surface2:#171b2a; --fg:#eef1f8; --muted:#8b91a8; --line:rgba(190,200,255,.11);
+  --work:#ff5a2c; --work2:#ffb547;
+  --rest:#1fc8ff; --rest2:#8a96ff;
+  --prep:#ffcc4d; --prep2:#ff8f3c;
+  --calm:#a995ff; --calm2:#5fe3ff;
+  --done:#c9b6ff; --done2:#fff1c9;
+  --font-num:"Oxanium","Chakra Petch",ui-monospace,"SF Mono",monospace;
+  --font-ui:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
+  --S:min(86vw, 50vh, 520px);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;box-sizing:border-box;background:var(--bg)}
+body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);overflow:hidden;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--p2);outline-offset:3px}
+
+#app{--p:var(--calm);--p2:var(--calm2);transition:--p .7s ease,--p2 .7s ease;
+  height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:6px;position:relative;isolation:isolate;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 14px}
+#app[data-phase="work"]{--p:var(--work);--p2:var(--work2)}
+#app[data-phase="rest"]{--p:var(--rest);--p2:var(--rest2)}
+#app[data-phase="prep"]{--p:var(--prep);--p2:var(--prep2)}
+#app[data-phase="done"]{--p:var(--done);--p2:var(--done2)}
+#app::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(50% 36% at 50% 46%, color-mix(in srgb,var(--p) 26%,transparent), transparent 72%),
+    radial-gradient(90% 50% at 50% 110%, color-mix(in srgb,var(--p2) 12%,transparent), transparent 70%)}
+
+/* top */
+.top{display:grid;gap:10px}
+.bar{display:flex;align-items:center;justify-content:space-between}
+.brand{font:500 13px/1 var(--font-num);letter-spacing:.42em;color:var(--muted)}
+.brand b{color:var(--p2);font-weight:700}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 70%,transparent);display:grid;place-items:center}
+.icon-btn svg{width:20px;height:20px}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:500;font-size:13px;letter-spacing:.04em;transition:color .3s,background .3s,border-color .3s}
+.tab[aria-selected="true"]{color:var(--fg);background:var(--surface2);border-color:color-mix(in srgb,var(--p) 55%,transparent)}
+
+/* dial */
+.main{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.stage{width:var(--S);height:var(--S);max-width:100%;position:relative;border-radius:50%;cursor:pointer;flex:none}
+.orbit-line{position:absolute;inset:4.5%;border-radius:50%;border:1px dashed rgba(200,210,255,.08)}
+.disc{position:absolute;inset:19%;border-radius:50%;border:1px solid var(--line);
+  background:radial-gradient(circle at 50% 30%, rgba(255,255,255,.06), rgba(255,255,255,.012) 62%), radial-gradient(circle, color-mix(in srgb,var(--p) 10%,transparent), transparent 70%)}
+.ring{position:absolute;inset:11%;width:78%;height:78%;overflow:visible}
+.track{fill:none;stroke:rgba(200,210,255,.08);stroke-width:5}
+.prog{fill:none;stroke:url(#pg);stroke-width:6;stroke-linecap:round;filter:drop-shadow(0 0 5px var(--p))}
+.tick{stroke:rgba(200,210,255,.13);stroke-width:1.1;stroke-linecap:round;transition:stroke .4s}
+.tick.on{stroke:var(--p2)}
+.head{fill:#fff;filter:drop-shadow(0 0 6px var(--p2))}
+.stage.flash .ring{animation:flash .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes flash{0%{transform:scale(1)}25%{transform:scale(1.045)}100%{transform:scale(1)}}
+
+.orbit{position:absolute;inset:0;animation:spin 140s linear infinite;animation-play-state:paused}
+#app.running .orbit{animation-play-state:running}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orb{position:absolute;left:50%;top:50%;width:var(--o);height:var(--o);margin:calc(var(--o) / -2) 0 0 calc(var(--o) / -2);border-radius:50%;
+  transform:rotate(var(--a)) translateY(calc(var(--S) * -.455));
+  border:1px solid rgba(220,225,255,.16);background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.12), rgba(255,255,255,.02) 62%);
+  transition:background .6s,box-shadow .6s,border-color .6s}
+.orb.lit{border-color:transparent;
+  background:radial-gradient(circle at 34% 30%, #fff 0 7%, var(--p2) 30%, var(--p) 70%, color-mix(in srgb,var(--p) 45%,#000) 100%);
+  box-shadow:0 0 calc(var(--o) * .7) color-mix(in srgb,var(--p) 65%,transparent)}
+.orb.cur{border-color:var(--p2);background:radial-gradient(circle at 35% 30%, color-mix(in srgb,var(--p2) 45%,transparent), transparent 70%)}
+.orb.cur::after{content:"";position:absolute;inset:-40%;border-radius:50%;border:1.5px solid var(--p2);animation:ping 1.6s ease-out infinite}
+@keyframes ping{from{transform:scale(.55);opacity:.95}to{transform:scale(1.2);opacity:0}}
+#app.celebrate .orb.lit{animation:flare 1.4s ease-out both;animation-delay:calc(var(--i) * 60ms)}
+@keyframes flare{0%{filter:brightness(1)}30%{filter:brightness(2.2);transform:rotate(var(--a)) translateY(calc(var(--S) * -.49)) scale(1.3)}100%{filter:brightness(1)}}
+
+.readout{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--S) * .018);text-align:center;pointer-events:none}
+.phase{font-weight:700;font-size:max(12px,calc(var(--S) * .042));line-height:1.1;letter-spacing:.2em;color:var(--p2);max-width:56%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:.2em}
+.phase.long{letter-spacing:.04em;padding-left:0}
+.time{font-family:var(--font-num);font-weight:500;line-height:.92;font-size:calc(var(--S) * var(--k,.25));display:flex;align-items:flex-end;color:var(--fg);
+  text-shadow:0 0 calc(var(--S) * .08) color-mix(in srgb,var(--p) 50%,transparent)}
+.time .d{display:inline-block;width:.6em;text-align:center}
+.time .c{display:inline-block;width:.28em;text-align:center;transform:translateY(-.06em)}
+.time .t{font-size:.42em;width:1.1em;text-align:left;padding-bottom:.08em;color:var(--muted)}
+.time.beat{animation:beat .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes beat{0%{transform:scale(1.12);color:var(--p2)}100%{transform:scale(1)}}
+.sub{font-weight:500;font-size:max(12px,calc(var(--S) * .036));color:var(--fg);opacity:.9;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.next{font-size:max(11px,calc(var(--S) * .03));color:var(--muted);max-width:56%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.laps{display:grid;gap:4px;width:min(100%,320px);font:500 14px var(--font-num);color:var(--muted)}
+.laps div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-block:4px}
+.laps div:first-child{color:var(--fg)}
+
+/* controls */
+.foot{display:grid;gap:12px}
+.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;justify-items:center}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:0;padding:0;font-size:12px;font-weight:500;color:var(--muted);min-width:0}
+.ctl .b{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--fg);transition:transform .15s}
+.ctl .b svg{width:24px;height:24px}
+.ctl .b .tx{font:700 17px var(--font-num)}
+.ctl.main{color:var(--fg)}
+.ctl.main .b{width:90px;height:90px;border:0;color:#0b0b12;
+  background:radial-gradient(circle at 34% 28%, color-mix(in srgb,var(--p2) 70%,#fff), var(--p2) 28%, var(--p) 78%);
+  box-shadow:0 12px 44px -10px color-mix(in srgb,var(--p) 80%,transparent), inset 0 -6px 14px rgba(0,0,0,.18)}
+.ctl.main .b svg{width:34px;height:34px}
+.ctl:active .b{transform:scale(.93)}
+.ctl:disabled{opacity:.28;cursor:default}
+.ctl:disabled:active .b{transform:none}
+.presets{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px;min-height:38px}
+.presets::-webkit-scrollbar{display:none}
+.presets.off{visibility:hidden}
+.chip{flex:none;padding:9px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:500;white-space:nowrap}
+.chip.on{border-color:var(--p);color:var(--p2);background:color-mix(in srgb,var(--p) 12%,var(--surface))}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(2,3,8,.6);opacity:0;pointer-events:none;transition:opacity .3s;z-index:20}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:86%;overflow-y:auto;overscroll-behavior:contain;
+  background:var(--surface);border-top:1px solid var(--line);border-radius:22px 22px 0 0;transform:translateY(105%);
+  transition:transform .38s cubic-bezier(.2,.8,.2,1);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px calc(24px + env(safe-area-inset-bottom,0px));
+  -webkit-user-select:auto;user-select:auto}
+.sheet.open{transform:none}
+.sheet-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 0}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sheet-head h2{margin:0;font-size:18px;font-weight:700;text-wrap:balance}
+.done-btn{padding:9px 18px;border-radius:999px;border:0;background:var(--fg);color:var(--bg);font-weight:700;font-size:14px}
+.sec{display:grid;gap:10px}
+.sec h3{margin:0;font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.note{margin:0;font-size:13px;line-height:1.7;color:var(--muted)}
+.fields{display:grid}
+.field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:8px;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:0}
+.field label,.field .lb{font-size:14px;font-weight:500;min-width:0}
+.field .hint{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepper button{width:44px;height:44px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:grid;place-items:center;touch-action:none}
+.stepper button svg{width:18px;height:18px}
+.stepper output{min-width:74px;text-align:center;font:500 17px var(--font-num);font-variant-numeric:tabular-nums}
+.item{display:flex;align-items:center;gap:8px;padding-block:6px;border-bottom:1px solid var(--line)}
+.item input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding-inline:12px;font:500 15px var(--font-ui)}
+.item .stepper output{min-width:56px;font-size:15px}
+.item .stepper button{width:38px;height:44px}
+.x{width:38px;height:44px;border-radius:12px;border:0;background:none;color:var(--muted);display:grid;place-items:center}
+.x svg{width:18px;height:18px}
+.wide{height:46px;border-radius:12px;border:1px dashed var(--line);background:none;color:var(--fg);font-weight:500;font-size:14px}
+.my{display:flex;align-items:center;gap:6px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px;border-bottom:1px solid var(--line)}
+.toggle:last-child{border-bottom:0}
+.sw{position:relative;width:52px;height:30px;flex:none;border-radius:999px;border:0;background:var(--surface2);box-shadow:inset 0 0 0 1px var(--line);transition:background .25s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--muted);transition:transform .25s,background .25s}
+.sw[aria-checked="true"]{background:color-mix(in srgb,var(--p) 70%,var(--surface2))}
+.sw[aria-checked="true"]::after{transform:translateX(22px);background:#fff}
+
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:30;max-width:calc(100% - 32px);
+  padding:10px 16px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);font-size:13px;font-weight:500;
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);pointer-events:none;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+
+@media (max-height:640px){ :root{--S:min(86vw, 46vh, 520px)} .ctl .b{width:54px;height:54px} .ctl.main .b{width:76px;height:76px} .tabs .tab{padding-block:7px} }
+@media (prefers-reduced-motion:reduce){
+  .orbit,.orb.cur::after,#app.celebrate .orb.lit,.time.beat,.stage.flash .ring{animation:none!important}
+  #app{transition:none}
+}
+</style>
+</head>
+<body>
+<div id="app" data-phase="idle">
+  <header class="top">
+    <div class="bar">
+      <div class="brand"><b>O</b>RBIT</div>
+      <button class="icon-btn" id="gear" aria-label="設定を開く"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="モード"></nav>
+  </header>
+
+  <main class="main">
+    <div class="stage" id="stage" role="button" tabindex="0" aria-label="タイマー">
+      <div class="orbit-line"></div>
+      <div class="disc"></div>
+      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" style="stop-color:var(--p2)"/>
+            <stop offset="1" style="stop-color:var(--p)"/>
+          </linearGradient>
+        </defs>
+        <g id="ticks"></g>
+        <circle class="track" cx="100" cy="100" r="84"/>
+        <circle class="prog" id="prog" cx="100" cy="100" r="84" transform="rotate(-90 100 100)"/>
+        <circle class="head" id="head" r="4.5" cx="100" cy="16"/>
+      </svg>
+      <div class="orbit" id="orbit"></div>
+      <div class="readout" aria-live="polite">
+        <div class="phase" id="phase"></div>
+        <div class="time" id="time"></div>
+        <div class="sub" id="sub"></div>
+        <div class="next" id="next"></div>
+      </div>
+    </div>
+    <div class="laps" id="laps" hidden></div>
+  </main>
+
+  <footer class="foot">
+    <div class="controls" id="controls"></div>
+    <div class="presets" id="presets"></div>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="設定" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'orbit-timer-v1';
+const $ = s => document.querySelector(s);
+const clone = o => JSON.parse(JSON.stringify(o));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const pad = n => String(n).padStart(2, '0');
+
+const MODES = [
+  { id: 'interval', name: 'インターバル' },
+  { id: 'rest', name: 'セット休憩' },
+  { id: 'circuit', name: 'サーキット' },
+  { id: 'countdown', name: 'カウント' },
+  { id: 'stopwatch', name: 'ストップウォッチ' },
+];
+const modeName = id => MODES.find(m => m.id === id).name;
+
+const DEF = {
+  interval: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 },
+  rest: { rest: 90, sets: 5 },
+  circuit: { prep: 10, gap: 15, rounds: 3, roundRest: 60, items: [
+    { name: 'スクワット', dur: 40 }, { name: '腕立て伏せ', dur: 40 }, { name: 'ランジ', dur: 40 },
+    { name: 'プランク', dur: 40 }, { name: 'バーピー', dur: 30 } ] },
+  countdown: { min: 5, sec: 0 },
+  stopwatch: {},
+};
+
+const PRESETS = {
+  interval: [
+    { name: 'タバタ 20/10×8', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 } },
+    { name: 'HIIT 40/20×10', cfg: { prep: 10, work: 40, rest: 20, rounds: 10, sets: 1, setRest: 60 } },
+    { name: '30/30×12', cfg: { prep: 10, work: 30, rest: 30, rounds: 12, sets: 1, setRest: 60 } },
+    { name: 'EMOM 10分', cfg: { prep: 10, work: 60, rest: 0, rounds: 10, sets: 1, setRest: 60 } },
+    { name: 'タバタ×3セット', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 3, setRest: 60 } },
+  ],
+  rest: [
+    { name: '休憩 1分', cfg: { rest: 60 } }, { name: '1分30秒', cfg: { rest: 90 } },
+    { name: '2分', cfg: { rest: 120 } }, { name: '3分', cfg: { rest: 180 } },
+  ],
+  circuit: [
+    { name: '全身 基本', cfg: clone(DEF.circuit) },
+    { name: '体幹', cfg: { prep: 10, gap: 10, rounds: 2, roundRest: 45, items: [
+      { name: 'プランク', dur: 45 }, { name: 'サイドプランク 右', dur: 30 }, { name: 'サイドプランク 左', dur: 30 },
+      { name: 'マウンテンクライマー', dur: 30 }, { name: 'デッドバグ', dur: 40 }, { name: 'ヒップリフト', dur: 40 } ] } },
+  ],
+  countdown: [1, 3, 5, 10, 20].map(m => ({ name: m + '分', cfg: { min: m, sec: 0 } })),
+  stopwatch: [],
+};
+
+// [key, label, min, max, step, hint]
+const FIELDS = {
+  interval: [['prep', '準備', 0, 60, 5], ['work', '運動', 5, 600, 5], ['rest', '休憩', 0, 600, 5, '0 にすると休憩なし'],
+    ['rounds', 'ラウンド数', 1, 30, 1, null, 'n'], ['sets', 'セット数', 1, 10, 1, null, 'n'], ['setRest', 'セット間の休憩', 0, 600, 15]],
+  rest: [['rest', '休憩時間', 15, 600, 15], ['sets', '目標セット数', 1, 20, 1, null, 'n']],
+  circuit: [['prep', '準備', 0, 60, 5], ['gap', '種目間の休憩', 0, 120, 5], ['rounds', 'ラウンド数', 1, 10, 1, null, 'n'], ['roundRest', 'ラウンド間の休憩', 0, 600, 15]],
+  countdown: [['min', '分', 0, 180, 1, null, 'n'], ['sec', '秒', 0, 55, 5, null, 'n']],
+};
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="currentColor"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.3"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.3"/></svg>',
+  reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg>',
+  skip: '<svg viewBox="0 0 24 24"><path d="M5.5 5.5v13l9.5-6.5z" fill="currentColor"/><path d="M18.5 5.5v13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  lap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4M6 4h11l-2.2 4L17 12H6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+
+/* ---------- storage ---------- */
+function load() {
+  const s = { mode: 'interval', cfg: clone(DEF), prefs: { sound: true, voice: false, vibrate: true }, custom: {} };
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  if (d && typeof d === 'object') {
+    if (MODES.some(m => m.id === d.mode)) s.mode = d.mode;
+    if (d.cfg) for (const k in DEF) if (d.cfg[k]) s.cfg[k] = Object.assign(clone(DEF[k]), d.cfg[k]);
+    if (d.prefs) Object.assign(s.prefs, d.prefs);
+    if (d.custom && typeof d.custom === 'object') s.custom = d.custom;
+  }
+  return s;
+}
+const store = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+const cfg = () => store.cfg[store.mode];
+
+/* ---------- format ---------- */
+function clock(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+function remain(sec) {
+  const c = Math.max(0, Math.ceil(sec - 1e-6));
+  return c < 60 ? String(c) : clock(c);
+}
+function jp(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m ? (s ? `${m}分${s}秒` : `${m}分`) : `${s}秒`;
+}
+function summary(mode, c) {
+  if (mode === 'interval') return `${c.work}/${c.rest} ×${c.rounds}` + (c.sets > 1 ? ` ×${c.sets}セット` : '');
+  if (mode === 'circuit') return `${c.items.length}種目 ×${c.rounds}`;
+  if (mode === 'countdown') return jp(c.min * 60 + c.sec);
+  if (mode === 'rest') return `休憩${jp(c.rest)} ×${c.sets}`;
+  return '';
+}
+
+/* ---------- feedback: sound, voice, vibration, screen ---------- */
+let ac = null;
+function audio() {
+  if (!ac) { const C = window.AudioContext || window.webkitAudioContext; if (C) try { ac = new C(); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+  return ac;
+}
+function tone(f, at, d, type, vol) {
+  const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + 0.03);
+}
+const CUES = {
+  tick: () => tone(1320, 0, 0.09, 'square', 0.09),
+  go: () => { tone(660, 0, 0.14, 'triangle', 0.32); tone(990, 0.12, 0.34, 'triangle', 0.32); },
+  rest: () => { tone(880, 0, 0.14, 'sine', 0.3); tone(587, 0.13, 0.38, 'sine', 0.3); },
+  finish: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.13, 0.55, 'triangle', 0.28)),
+  lap: () => tone(1568, 0, 0.06, 'square', 0.08),
+};
+function play(n) { if (store.prefs.sound && ac) try { CUES[n](); } catch (e) {} }
+function buzz(p) { if (store.prefs.vibrate && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
+function say(t) {
+  if (!t || !store.prefs.voice || !('speechSynthesis' in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ja-JP'; u.rate = 1.1; speechSynthesis.speak(u); } catch (e) {}
+}
+let wl = null;
+async function wake(on) {
+  try {
+    if (on) {
+      if (!wl && 'wakeLock' in navigator) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); }
+    } else if (wl) { const w = wl; wl = null; await w.release(); }
+  } catch (e) { wl = null; }
+}
+
+/* ---------- segment engine (interval / circuit / countdown) ---------- */
+function buildSegs(mode, c) {
+  const s = [];
+  if (mode === 'interval') {
+    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '準備', sub: `${c.rounds}ラウンド` + (c.sets > 1 ? ` × ${c.sets}セット` : ''), orbs: c.rounds, lit: 0, orb: 0, speak: '準備' });
+    for (let st = 0; st < c.sets; st++) {
+      for (let r = 0; r < c.rounds; r++) {
+        const sub = `ラウンド ${r + 1}/${c.rounds}` + (c.sets > 1 ? `・セット ${st + 1}/${c.sets}` : '');
+        const last = st === c.sets - 1 && r === c.rounds - 1;
+        s.push({ type: 'work', dur: c.work, label: last ? 'ラスト' : '運動', sub, orbs: c.rounds, lit: r, orb: r, speak: last ? 'ラスト' : 'スタート' });
+        if (c.rest > 0 && r < c.rounds - 1) s.push({ type: 'rest', dur: c.rest, label: '休憩', sub, orbs: c.rounds, lit: r + 1, orb: r + 1, speak: '休憩' });
+      }
+      if (st < c.sets - 1 && c.setRest > 0) s.push({ type: 'rest', dur: c.setRest, label: 'セット間休憩', sub: `セット ${st + 1}/${c.sets} 完了`, orbs: c.rounds, lit: c.rounds, orb: -1, speak: 'セット間の休憩' });
+    }
+  } else if (mode === 'circuit') {
+    const n = c.items.length;
+    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '準備', sub: `${n}種目 × ${c.rounds}ラウンド`, orbs: n, lit: 0, orb: 0, speak: '準備。最初は' + c.items[0].name });
+    for (let r = 0; r < c.rounds; r++) {
+      c.items.forEach((it, i) => {
+        const sub = `種目 ${i + 1}/${n}・ラウンド ${r + 1}/${c.rounds}`;
+        s.push({ type: 'work', dur: it.dur, label: it.name || `種目${i + 1}`, sub, orbs: n, lit: i, orb: i, speak: it.name, long: true });
+        if (c.gap > 0 && i < n - 1) s.push({ type: 'rest', dur: c.gap, label: '休憩', sub, orbs: n, lit: i + 1, orb: i + 1, speak: '休憩。次は' + c.items[i + 1].name });
+      });
+      if (r < c.rounds - 1 && c.roundRest > 0) s.push({ type: 'rest', dur: c.roundRest, label: 'ラウンド間休憩', sub: `ラウンド ${r + 1}/${c.rounds} 完了`, orbs: n, lit: n, orb: -1, speak: 'ラウンド間の休憩' });
+    }
+  } else if (mode === 'countdown') {
+    s.push({ type: 'count', dur: Math.max(5, c.min * 60 + c.sec), label: 'カウントダウン', sub: '', orbs: 12, progOrbs: true, speak: 'スタート' });
+  }
+  return s;
+}
+const T = { status: 'idle', segs: [], idx: 0, segStart: 0, pausedAt: 0, beep: '' };
+function rebuild() { T.segs = buildSegs(store.mode, cfg()); T.idx = 0; T.status = 'idle'; T.beep = ''; }
+function segStartRun() {
+  audio();
+  if (T.status === 'idle' || T.status === 'done') { rebuild(); T.status = 'running'; T.segStart = Date.now(); enter(false); }
+  else if (T.status === 'paused') { T.segStart += Date.now() - T.pausedAt; T.status = 'running'; }
+  wake(true);
+}
+function segPause() { T.pausedAt = Date.now(); T.status = 'paused'; wake(false); }
+function segSkip() {
+  const now = T.status === 'paused' ? T.pausedAt : Date.now();
+  T.idx++; T.segStart = now;
+  if (T.idx >= T.segs.length) segFinish(); else enter(false);
+}
+function enter(quiet) {
+  const s = T.segs[T.idx];
+  flash();
+  if (quiet) return;
+  if (s.type === 'work' || s.type === 'count') { play('go'); buzz([120, 60, 120]); }
+  else if (s.type === 'rest') { play('rest'); buzz(320); }
+  else play('tick');
+  say(s.speak);
+}
+function segFinish() {
+  T.status = 'done'; T.idx = T.segs.length - 1;
+  play('finish'); buzz([200, 100, 200, 100, 400]); say('おつかれさまでした');
+  wake(false); celebrate();
+}
+function segTick() {
+  if (T.status !== 'running') return;
+  const now = Date.now();
+  while (now - T.segStart >= T.segs[T.idx].dur * 1000) {
+    T.segStart += T.segs[T.idx].dur * 1000; T.idx++;
+    if (T.idx >= T.segs.length) { segFinish(); return; }
+    enter(now - T.segStart > 1500); // stay quiet while catching up after the app was in the background
+  }
+  const s = T.segs[T.idx], c = Math.ceil(s.dur - (now - T.segStart) / 1000);
+  if (c >= 1 && c <= 3 && s.dur > 3) {
+    const key = T.idx + ':' + c;
+    if (T.beep !== key) { T.beep = key; play('tick'); buzz(40); beat(); }
+  }
+}
+function viewSeg() {
+  const segs = T.segs, c = cfg();
+  const total = segs.reduce((a, s) => a + s.dur, 0);
+  const first = segs.find(s => s.type !== 'prep') || segs[0];
+  if (T.status === 'idle') {
+    let sub = '';
+    if (store.mode === 'interval') sub = `運動${jp(c.work)}・休憩${jp(c.rest)} × ${c.rounds}` + (c.sets > 1 ? ` × ${c.sets}` : '');
+    else if (store.mode === 'circuit') sub = `${c.items.length}種目 × ${c.rounds}ラウンド`;
+    return { phase: 'idle', label: modeName(store.mode), time: store.mode === 'countdown' ? clock(total) : clock(total), sub,
+      next: store.mode === 'countdown' ? 'タップでスタート' : '合計時間・タップでスタート', ring: 1, orbs: { n: first.orbs, lit: 0, cur: -1 } };
+  }
+  if (T.status === 'done') {
+    return { phase: 'done', label: 'COMPLETE', time: clock(total), sub: 'おつかれさまでした', next: `合計 ${jp(total)}`, ring: 1, orbs: { n: first.orbs, lit: first.orbs, cur: -1 } };
+  }
+  const s = segs[T.idx], now = T.status === 'paused' ? T.pausedAt : Date.now();
+  const rem = Math.max(0, s.dur - (now - T.segStart) / 1000), nx = segs[T.idx + 1];
+  const f = rem / s.dur;
+  return {
+    phase: s.type === 'count' ? 'idle' : s.type, label: T.status === 'paused' ? '一時停止中' : s.label, long: s.long && T.status !== 'paused',
+    time: remain(rem), sub: s.sub, next: nx ? `次：${nx.label}　${jp(nx.dur)}` : 'これで最後',
+    ring: f, urgent: Math.ceil(rem) <= 3,
+    orbs: s.progOrbs ? { n: 12, lit: Math.floor((1 - f) * 12 + 1e-9), cur: Math.min(11, Math.floor((1 - f) * 12)) } : { n: s.orbs, lit: s.lit, cur: s.orb },
+  };
+}
+
+/* ---------- set rest (gym: tap after each set) ---------- */
+const R = { phase: 'idle', sets: 0, setStart: 0, restStart: 0, restDur: 0, beep: '' };
+function completeSet() {
+  audio();
+  const c = cfg();
+  R.sets++;
+  if (R.sets >= c.sets) {
+    R.phase = 'done'; play('finish'); buzz([200, 100, 200, 100, 400]); say('全セット完了。おつかれさまでした'); wake(false); celebrate();
+  } else {
+    R.phase = 'rest'; R.restStart = Date.now(); R.restDur = c.rest; R.beep = '';
+    play('rest'); buzz(320); say('休憩'); wake(true);
+  }
+  flash();
+}
+function endRest() {
+  R.phase = 'set'; R.setStart = Date.now();
+  play('go'); buzz([120, 60, 120]); say(R.sets + 1 === cfg().sets ? 'ラストセット' : `${R.sets + 1}セット目`); flash();
+}
+function adjRest(d) {
+  R.restDur = Math.max(5, R.restDur + d);
+  if (R.restDur - (Date.now() - R.restStart) / 1000 <= 0) endRest();
+  toast(`休憩を${Math.abs(d)}秒${d > 0 ? 'のばしました' : '短くしました'}`);
+}
+function restTick() {
+  if (R.phase !== 'rest') return;
+  const rem = R.restDur - (Date.now() - R.restStart) / 1000;
+  if (rem <= 0) { endRest(); return; }
+  const c = Math.ceil(rem);
+  if (c <= 3 && R.beep !== c) { R.beep = c; play('tick'); buzz(40); beat(); }
+}
+function viewRest() {
+  const c = cfg(), orbs = { n: c.sets, lit: R.sets, cur: R.sets };
+  if (R.phase === 'idle') return { phase: 'idle', label: 'セット休憩', time: clock(c.rest), sub: `目標 ${c.sets}セット`, next: 'セットが終わったらタップ', ring: 1, orbs: { n: c.sets, lit: 0, cur: 0 } };
+  if (R.phase === 'done') return { phase: 'done', label: 'COMPLETE', time: String(c.sets), sub: 'セット完了', next: 'おつかれさまでした', ring: 1, orbs: { n: c.sets, lit: c.sets, cur: -1 } };
+  if (R.phase === 'set') {
+    const el = (Date.now() - R.setStart) / 1000;
+    return { phase: 'work', label: `セット ${R.sets + 1}/${c.sets}`, time: clock(el), sub: R.sets + 1 === c.sets ? 'ラストセット' : 'セット中', next: '終わったらタップで休憩', ring: (el % 60) / 60, orbs };
+  }
+  const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
+  return { phase: 'rest', label: '休憩', time: remain(rem), sub: `次は ${R.sets + 1}セット目`, next: `${R.sets}/${c.sets} セット完了`, ring: rem / R.restDur, urgent: Math.ceil(rem) <= 3, orbs };
+}
+
+/* ---------- stopwatch ---------- */
+const W = { status: 'idle', start: 0, acc: 0, laps: [] };
+const swEl = () => W.acc + (W.status === 'running' ? Date.now() - W.start : 0);
+function swStart() { audio(); W.start = Date.now(); W.status = 'running'; wake(true); }
+function swPause() { W.acc += Date.now() - W.start; W.status = 'paused'; wake(false); }
+function swReset() { W.status = 'idle'; W.acc = 0; W.laps = []; }
+function swLap() {
+  const e = swEl(), prev = W.laps.length ? W.laps[W.laps.length - 1].at : 0;
+  W.laps.push({ at: e, d: e - prev }); play('lap'); buzz(30);
+}
+function viewSW() {
+  const e = swEl(), n = W.laps.length;
+  return { phase: W.status === 'running' ? 'work' : 'idle',
+    label: W.status === 'idle' ? 'ストップウォッチ' : W.status === 'paused' ? '一時停止中' : '計測中',
+    time: clock(e / 1000), tenth: Math.floor(e % 1000 / 100), sub: n ? `ラップ ${n}` : '', next: W.status === 'idle' ? 'タップでスタート' : '',
+    ring: (e / 1000 % 60) / 60, orbs: { n: 12, lit: Math.min(n, 12), cur: -1 } };
+}
+
+/* ---------- mode-level dispatch ---------- */
+function isActive() {
+  const m = store.mode;
+  if (m === 'rest') return R.phase === 'set' || R.phase === 'rest';
+  if (m === 'stopwatch') return W.status === 'running';
+  return T.status === 'running';
+}
+function busy() {
+  const m = store.mode;
+  if (m === 'rest') return R.phase === 'set' || R.phase === 'rest';
+  if (m === 'stopwatch') return W.status !== 'idle';
+  return T.status === 'running' || T.status === 'paused';
+}
+function resetAll() { rebuild(); R.phase = 'idle'; R.sets = 0; swReset(); wake(false); }
+function view() { return store.mode === 'rest' ? viewRest() : store.mode === 'stopwatch' ? viewSW() : viewSeg(); }
+function logic() { if (store.mode === 'rest') restTick(); else if (store.mode !== 'stopwatch') segTick(); }
+
+function controls() {
+  const m = store.mode, A = f => () => { f(); render(); };
+  const gear = { ic: 'gear', t: '設定', fn: openSheet };
+  if (m === 'rest') {
+    if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(endRest) }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
+    if (R.phase === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(resetAll) }, c: { ic: 'reset', t: 'もう一度', fn: A(resetAll), noStage: true }, r: gear };
+    const last = R.sets + 1 >= cfg().sets;
+    return { l: { ic: 'reset', t: 'リセット', fn: A(resetAll), dis: R.phase === 'idle' }, c: { ic: 'check', t: last ? '最後のセット完了' : 'セット完了', fn: A(completeSet) }, r: gear };
+  }
+  if (m === 'stopwatch') {
+    if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
+    return { l: { ic: 'reset', t: 'リセット', fn: A(swReset), dis: W.status === 'idle' }, c: { ic: 'play', t: W.status === 'paused' ? '再開' : 'スタート', fn: A(swStart) }, r: { ic: 'lap', t: 'ラップ', dis: true } };
+  }
+  if (T.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(segPause) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
+  if (T.status === 'paused') return { l: { ic: 'reset', t: 'リセット', fn: A(() => { rebuild(); wake(false); }) }, c: { ic: 'play', t: '再開', fn: A(segStartRun) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
+  if (T.status === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(rebuild) }, c: { ic: 'reset', t: 'もう一度', fn: A(segStartRun), noStage: true }, r: gear };
+  return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'play', t: 'スタート', fn: A(segStartRun) }, r: gear };
+}
+
+/* ---------- rendering ---------- */
+const app = $('#app'), stage = $('#stage'), timeEl = $('#time'), phaseEl = $('#phase'), subEl = $('#sub'), nextEl = $('#next');
+const prog = $('#prog'), head = $('#head'), orbit = $('#orbit'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
+const RAD = 84, CIRC = 2 * Math.PI * RAD;
+prog.style.strokeDasharray = CIRC.toFixed(2);
+const ticks = [];
+(() => {
+  const g = $('#ticks'), ns = 'http://www.w3.org/2000/svg';
+  for (let i = 0; i < 60; i++) {
+    const a = i / 60 * Math.PI * 2 - Math.PI / 2, r1 = i % 5 ? 93 : 91, r2 = 97;
+    const l = document.createElementNS(ns, 'line');
+    l.setAttribute('x1', (100 + r1 * Math.cos(a)).toFixed(2)); l.setAttribute('y1', (100 + r1 * Math.sin(a)).toFixed(2));
+    l.setAttribute('x2', (100 + r2 * Math.cos(a)).toFixed(2)); l.setAttribute('y2', (100 + r2 * Math.sin(a)).toFixed(2));
+    l.setAttribute('class', 'tick'); g.appendChild(l); ticks.push(l);
+  }
+})();
+
+let last = {}, ctlSig = '', ctlFns = {}, orbN = -1;
+function timeHTML(str, tenth) {
+  let h = '';
+  for (const ch of str) h += ch === ':' ? '<span class="c">:</span>' : `<span class="d">${ch}</span>`;
+  if (tenth != null) h += `<span class="t">.${tenth}</span>`;
+  return h;
+}
+function setText(el, k, v) { if (last[k] !== v) { last[k] = v; el.textContent = v; } }
+function render() {
+  const v = view();
+  if (app.dataset.phase !== v.phase) app.dataset.phase = v.phase;
+  app.classList.toggle('running', isActive());
+  setText(phaseEl, 'label', v.label);
+  phaseEl.classList.toggle('long', !!v.long);
+  setText(subEl, 'sub', v.sub || '');
+  setText(nextEl, 'next', v.next || '');
+  const tk = v.time + '|' + v.tenth;
+  if (last.time !== tk) {
+    last.time = tk;
+    timeEl.innerHTML = timeHTML(v.time, v.tenth);
+    const len = v.time.length + (v.tenth != null ? 1.4 : 0);
+    timeEl.style.setProperty('--k', len <= 2 ? .3 : len <= 4 ? .24 : len <= 5.4 ? .19 : .15);
+  }
+  const f = clamp(v.ring, 0, 1);
+  prog.style.strokeDashoffset = (CIRC * (1 - f)).toFixed(2);
+  const a = -Math.PI / 2 + f * Math.PI * 2;
+  head.setAttribute('cx', (100 + RAD * Math.cos(a)).toFixed(2));
+  head.setAttribute('cy', (100 + RAD * Math.sin(a)).toFixed(2));
+  const on = Math.round(f * 60);
+  if (last.ticks !== on) { last.ticks = on; ticks.forEach((t, i) => t.classList.toggle('on', i < on)); }
+  renderOrbs(v.orbs);
+  const c = controls();
+  const sig = ['l', 'c', 'r'].map(k => [c[k].ic, c[k].tx, c[k].t, !!c[k].dis].join(',')).join('|');
+  if (sig !== ctlSig) {
+    ctlSig = sig; ctlFns = c;
+    ctlEl.innerHTML = ['l', 'c', 'r'].map(k => {
+      const b = c[k];
+      return `<button class="ctl${k === 'c' ? ' main' : ''}" data-k="${k}" ${b.dis ? 'disabled' : ''}><span class="b">${b.tx ? `<span class="tx">${b.tx}</span>` : ICON[b.ic]}</span><span>${b.t}</span></button>`;
+    }).join('');
+  } else ctlFns = c;
+  const showPresets = !busy() && PRESETS[store.mode].length + (store.custom[store.mode] || []).length > 0;
+  presetsEl.classList.toggle('off', !showPresets);
+  if (store.mode === 'stopwatch') {
+    lapsEl.hidden = W.laps.length === 0;
+    const lk = W.laps.length;
+    if (last.laps !== lk) {
+      last.laps = lk;
+      lapsEl.innerHTML = W.laps.slice(-3).reverse().map((l, i) =>
+        `<div><span>LAP ${lk - i}</span><span>${clock(l.d / 1000)}.${Math.floor(l.d % 1000 / 100)}</span></div>`).join('');
+    }
+  } else lapsEl.hidden = true;
+}
+function renderOrbs(o) {
+  const n = clamp(o.n, 1, 30);
+  if (n !== orbN) {
+    orbN = n;
+    const size = n <= 6 ? .085 : n <= 10 ? .068 : n <= 16 ? .052 : .04;
+    orbit.style.setProperty('--o', `calc(var(--S) * ${size})`);
+    orbit.innerHTML = Array.from({ length: n }, (_, i) => `<i class="orb" style="--a:${(i * 360 / n).toFixed(2)}deg;--i:${i}"></i>`).join('');
+    last.orbs = '';
+  }
+  const k = o.lit + ':' + o.cur;
+  if (last.orbs === k) return;
+  last.orbs = k;
+  [...orbit.children].forEach((el, i) => { el.classList.toggle('lit', i < o.lit); el.classList.toggle('cur', i === o.cur && i >= o.lit); });
+}
+function flash() { stage.classList.remove('flash'); void stage.offsetWidth; stage.classList.add('flash'); }
+function beat() { timeEl.classList.remove('beat'); void timeEl.offsetWidth; timeEl.classList.add('beat'); }
+function celebrate() { app.classList.remove('celebrate'); void app.offsetWidth; app.classList.add('celebrate'); setTimeout(() => app.classList.remove('celebrate'), 3000); }
+let toastT = 0;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ---------- tabs & presets ---------- */
+let pendingMode = null, pendingT = 0;
+function renderTabs() {
+  $('#tabs').innerHTML = MODES.map(m => `<button class="tab" role="tab" data-m="${m.id}" aria-selected="${m.id === store.mode}">${m.name}</button>`).join('');
+  const cur = $('#tabs [aria-selected="true"]');
+  if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function switchMode(id) {
+  if (id === store.mode) return;
+  if (busy() && pendingMode !== id) {
+    pendingMode = id; clearTimeout(pendingT); pendingT = setTimeout(() => { pendingMode = null; }, 2600);
+    toast('もう一度タップで切り替え（今のタイマーはリセット）'); return;
+  }
+  pendingMode = null;
+  store.mode = id; save(); resetAll(); renderTabs(); renderPresets(); render();
+}
+function presetOn(p) {
+  const c = cfg();
+  return Object.keys(p.cfg).every(k => JSON.stringify(c[k]) === JSON.stringify(p.cfg[k]));
+}
+function allPresets() { return PRESETS[store.mode].concat(store.custom[store.mode] || []); }
+function renderPresets() {
+  presetsEl.innerHTML = allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('');
+}
+function applyPreset(i) {
+  const p = allPresets()[i]; if (!p) return;
+  Object.assign(cfg(), clone(p.cfg)); save(); rebuild(); R.phase = 'idle'; R.sets = 0;
+  renderPresets(); render(); if (sheetOpen) buildSheet();
+  toast(`${p.name} にしました`);
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+/* ---------- settings sheet ---------- */
+const sheet = $('#sheet'), scrim = $('#scrim');
+let sheetOpen = false;
+function openSheet() { buildSheet(); sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
+function closeSheet() { sheetOpen = false; sheet.classList.remove('open'); scrim.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+function fmtField(f, v) { return f[6] === 'n' ? String(v) : jp(v); }
+function stepper(id, val, attrs) {
+  return `<div class="stepper"><button ${attrs} data-d="-1" aria-label="減らす">${ICON.minus}</button><output id="${id}">${val}</output><button ${attrs} data-d="1" aria-label="増やす">${ICON.plus}</button></div>`;
+}
+function buildSheet() {
+  const m = store.mode, c = cfg(), b = busy();
+  let h = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${modeName(m)}の設定</h2><button class="done-btn" data-act="close">完了</button></div>`;
+  if (m !== 'stopwatch') {
+    if (b) h += `<p class="note">タイマーが動いている間は時間を変えられません。リセットすると変えられます。</p>`;
+    else {
+      h += `<div class="sec"><h3>プリセット</h3><div class="chips">${allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('')}</div></div>`;
+      h += `<div class="sec"><h3>時間と回数</h3><div class="fields">` + FIELDS[m].map(f =>
+        `<div class="field"><span class="lb">${f[1]}${f[5] ? `<span class="hint">${f[5]}</span>` : ''}</span>${stepper('f-' + f[0], fmtField(f, c[f[0]]), `data-f="${f[0]}"`)}</div>`).join('') + `</div></div>`;
+      if (m === 'circuit') {
+        h += `<div class="sec"><h3>種目（上から順に）</h3><div>` + c.items.map((it, i) =>
+          `<div class="item"><input id="item-${i}" data-name="${i}" value="${esc(it.name)}" maxlength="20" aria-label="種目${i + 1}の名前">${stepper('it-' + i, jp(it.dur), `data-it="${i}"`)}<button class="x" data-del="${i}" aria-label="種目${i + 1}を消す" ${c.items.length <= 1 ? 'disabled' : ''}>${ICON.x}</button></div>`).join('') +
+          `</div>${c.items.length < 12 ? '<button class="wide" data-act="add">＋ 種目を追加</button>' : ''}</div>`;
+      }
+      const mine = store.custom[m] || [];
+      h += `<div class="sec"><h3>マイプリセット</h3>` +
+        (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS[m].length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '<p class="note">よく使う設定を保存すると、ホーム画面の下にボタンが出ます。</p>') +
+        (mine.length < 6 ? `<button class="wide" data-act="savepreset">今の設定を保存（${esc(summary(m, c))}）</button>` : '') + `</div>`;
+    }
+  }
+  const tg = (k, label, hint) => `<div class="toggle"><span class="lb">${label}<span class="hint">${hint}</span></span><button class="sw" role="switch" data-pref="${k}" aria-checked="${!!store.prefs[k]}" aria-label="${label}"></button></div>`;
+  h += `<div class="sec"><h3>合図</h3><div>` +
+    tg('sound', '音', '切り替えと残り3秒で鳴ります。iPhone はマナーモード中だと鳴りません') +
+    tg('voice', '声で知らせる', '「休憩」「ラスト」や種目名を読み上げます') +
+    tg('vibrate', '振動', 'Android のみ対応') +
+    `</div><button class="wide" data-act="test">音を試す</button></div></div>`;
+  sheet.innerHTML = h;
+}
+function changeField(k, d) {
+  const f = FIELDS[store.mode].find(x => x[0] === k), c = cfg();
+  c[k] = clamp(c[k] + d * f[4], f[2], f[3]);
+  if (store.mode === 'countdown' && c.min === 0 && c.sec === 0) c.sec = 5;
+  save(); rebuild();
+  const out = $('#f-' + k); if (out) out.textContent = fmtField(f, c[k]);
+  if (store.mode === 'countdown') { const s = $('#f-sec'); if (s) s.textContent = String(c.sec); }
+  refreshChips(); render();
+}
+function changeItem(i, d) {
+  const it = cfg().items[i]; it.dur = clamp(it.dur + d * 5, 5, 300);
+  save(); rebuild(); const out = $('#it-' + i); if (out) out.textContent = jp(it.dur); refreshChips(); render();
+}
+function refreshChips() {
+  sheet.querySelectorAll('.chip[data-p]').forEach(el => el.classList.toggle('on', presetOn(allPresets()[+el.dataset.p])));
+  renderPresets();
+}
+
+// press-and-hold repeat for steppers
+let holdT = 0, holdI = 0;
+function stopHold() { clearTimeout(holdT); clearInterval(holdI); }
+sheet.addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-d]'); if (!b) return;
+  e.preventDefault();
+  const d = +b.dataset.d, run = () => b.dataset.f ? changeField(b.dataset.f, d) : changeItem(+b.dataset.it, d);
+  run(); stopHold();
+  holdT = setTimeout(() => { holdI = setInterval(run, 70); }, 380);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => sheet.addEventListener(t, stopHold));
+sheet.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.dataset.d) return;
+  const m = store.mode, c = cfg();
+  if (t.dataset.p != null) return applyPreset(+t.dataset.p);
+  if (t.dataset.pref) { store.prefs[t.dataset.pref] = !store.prefs[t.dataset.pref]; t.setAttribute('aria-checked', store.prefs[t.dataset.pref]); save(); audio(); return; }
+  if (t.dataset.del != null) { c.items.splice(+t.dataset.del, 1); save(); rebuild(); buildSheet(); renderPresets(); render(); return; }
+  if (t.dataset.mydel != null) { store.custom[m].splice(+t.dataset.mydel, 1); save(); buildSheet(); renderPresets(); render(); return; }
+  const act = t.dataset.act;
+  if (act === 'close') closeSheet();
+  else if (act === 'add') { c.items.push({ name: `種目${c.items.length + 1}`, dur: 30 }); save(); rebuild(); buildSheet(); render(); const inp = $('#item-' + (c.items.length - 1)); if (inp) inp.focus(); }
+  else if (act === 'savepreset') { (store.custom[m] = store.custom[m] || []).push({ name: summary(m, c), cfg: clone(c) }); save(); buildSheet(); renderPresets(); render(); toast('マイプリセットに保存しました'); }
+  else if (act === 'test') { audio(); const was = store.prefs.sound; store.prefs.sound = true; play('go'); store.prefs.sound = was; buzz([120, 60, 120]); say('休憩'); }
+});
+sheet.addEventListener('input', e => {
+  const i = e.target.dataset.name; if (i == null) return;
+  cfg().items[+i].name = e.target.value.trim(); save(); rebuild(); render();
+});
+scrim.addEventListener('click', closeSheet);
+
+/* ---------- events ---------- */
+$('#gear').addEventListener('click', openSheet);
+$('#tabs').addEventListener('click', e => { const t = e.target.closest('[data-m]'); if (t) switchMode(t.dataset.m); });
+presetsEl.addEventListener('click', e => { const t = e.target.closest('[data-p]'); if (t) applyPreset(+t.dataset.p); });
+ctlEl.addEventListener('click', e => { const t = e.target.closest('[data-k]'); if (t && !t.disabled) { const b = ctlFns[t.dataset.k]; if (b && b.fn) b.fn(); } });
+function stageAction() { const c = ctlFns.c || controls().c; if (c.fn && !c.noStage && !c.dis) c.fn(); }
+stage.addEventListener('click', stageAction);
+document.addEventListener('keydown', e => {
+  if (sheetOpen) { if (e.key === 'Escape') closeSheet(); return; }
+  if (e.key === ' ' || e.key === 'Enter') { if (e.target.closest && e.target.closest('button,input')) return; e.preventDefault(); stageAction(); }
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (isActive()) wake(true); logic(); render(); } });
+
+function frame() { logic(); render(); requestAnimationFrame(frame); }
+setInterval(logic, 250); // keeps phases advancing when animation frames are throttled
+
+rebuild(); renderTabs(); renderPresets(); render(); requestAnimationFrame(frame);
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) {}
+}
+})();
+</script>
+</body>
+</html>

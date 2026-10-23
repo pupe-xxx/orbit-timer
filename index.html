@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!--PWA-->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08070a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ORBIT">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<!--/PWA-->
+<title>ORBIT 居合</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Shippori+Mincho+B1:wght@500;700&display=swap">
+<style>
+/* Layout: the world fills the screen. Upper half = brush numerals over the night sky, a katana as the charge gauge, bamboo stalks as rounds.
+   Lower half = the samurai; a dark ink strip at the bottom holds the controls. Work charges the blade; zero is one draw-cut. */
+@property --p  { syntax: "<color>"; inherits: true; initial-value: #c8102e; }
+:root{
+  --ink:#08070a; --ink2:#131118; --paper:#f3ede3; --mist:#a7a2a6; --line:rgba(243,237,227,.16);
+  --crimson:#c8102e; --ember:#ff5a3c; --gold:#f2d38c; --steel:#c9d4e6; --moon:#8fa9d6;
+  --font-brush:"Yuji Syuku","Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-ui:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --U:min(100vw, 58vh, 560px);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;box-sizing:border-box;background:var(--ink)}
+body{height:100%;margin:0;background:var(--ink);color:var(--paper);font-family:var(--font-ui);overflow:hidden;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* world layers (fixed, edge to edge) */
+.world{position:fixed;inset:0;z-index:0;overflow:hidden;background:radial-gradient(70% 40% at 50% 28%, #3a3640, #0b0a0e 70%)}
+.scene{position:absolute;inset:-4%;background-size:cover;background-position:center 62%;opacity:0;transition:opacity 1.1s ease, transform 1.2s ease, filter 1.2s ease;transform:scale(1)}
+.scene.on{opacity:1}
+.scene.fast{transition:opacity .08s linear}
+#app[data-phase="work"] .scene[data-s="kamae"].on{transform:scale(calc(1 + var(--charge,0) * .07))}
+#app[data-phase="prep"] .scene.on,#app[data-phase="idle"] .scene.on{filter:brightness(.78) saturate(.85)}
+.shade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg, rgba(6,5,8,.78) 0%, rgba(6,5,8,.5) 30%, rgba(6,5,8,0) 52%, rgba(6,5,8,0) 70%, rgba(6,5,8,.86) 100%)}
+.vignette{position:absolute;inset:0;pointer-events:none;opacity:calc(.35 + var(--tension,0) * .6);transition:opacity .4s;
+  background:radial-gradient(ellipse at 50% 55%, transparent 40%, rgba(70,0,8,.85) 100%)}
+#leaves{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.slash{position:absolute;left:-10%;right:-10%;top:47%;height:3px;pointer-events:none;opacity:0;transform-origin:left center;
+  transform:rotate(-9deg) scaleX(0);background:linear-gradient(90deg, transparent, #fff 12%, #fff6d8 60%, transparent);
+  box-shadow:0 0 18px 6px rgba(255,240,200,.85), 0 0 60px 18px rgba(255,90,60,.45)}
+#app.strike .flash{animation:flash .55s ease-out}
+#app.strike .slash{animation:slash .9s cubic-bezier(.15,.9,.2,1)}
+#app.strike{animation:quake .45s linear}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+@keyframes slash{0%{opacity:1;transform:rotate(-9deg) scaleX(0)}18%{opacity:1;transform:rotate(-9deg) scaleX(1)}100%{opacity:0;transform:rotate(-9deg) scaleX(1) scaleY(.2)}}
+@keyframes quake{0%,100%{transform:none}20%{transform:translate(-7px,4px)}40%{transform:translate(6px,-5px)}60%{transform:translate(-4px,3px)}80%{transform:translate(2px,-2px)}}
+#app.tense{animation:tremble .18s linear infinite}
+@keyframes tremble{0%,100%{transform:none}25%{transform:translate(calc(var(--tension) * 1.6px),calc(var(--tension) * -1px))}75%{transform:translate(calc(var(--tension) * -1.4px),calc(var(--tension) * 1.2px))}}
+
+/* app */
+#app{--p:var(--crimson);transition:--p .8s ease;position:relative;z-index:1;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:4px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 12px}
+#app[data-phase="rest"]{--p:var(--moon)}
+#app[data-phase="prep"],#app[data-phase="done"]{--p:var(--gold)}
+#app[data-phase="idle"]{--p:var(--gold)}
+
+.top{display:grid;gap:8px}
+.bar{display:flex;align-items:center;justify-content:space-between}
+.brand{font:500 12px/1 var(--font-ui);letter-spacing:.5em;color:var(--mist)}
+.brand b{color:var(--paper);font-weight:700}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(8,7,10,.45);display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.icon-btn svg{width:19px;height:19px}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:7px 12px;border:0;border-bottom:1.5px solid transparent;background:none;color:var(--mist);font-weight:500;font-size:13px;letter-spacing:.08em;transition:color .3s,border-color .3s}
+.tab[aria-selected="true"]{color:var(--paper);border-bottom-color:var(--p)}
+
+.main{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:min(3vh,24px);gap:min(1.4vh,12px);cursor:pointer;transition:opacity .35s}
+#app.strike .main{opacity:0}
+.phase{font:700 15px/1.2 var(--font-ui);letter-spacing:.42em;padding-left:.42em;color:var(--paper);display:flex;align-items:center;gap:12px;max-width:100%}
+.phase .kanji{font:400 22px/1 var(--font-brush);letter-spacing:0;padding:0;color:var(--p);text-shadow:0 0 12px color-mix(in srgb,var(--p) 60%,transparent)}
+.phase .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phase.long .tx{letter-spacing:.08em}
+.time{font-family:var(--font-brush);font-weight:400;line-height:.86;font-size:calc(var(--U) * var(--k,.5));display:flex;align-items:flex-end;color:var(--paper);
+  text-shadow:.035em .035em 0 color-mix(in srgb,var(--crimson) 85%,transparent), 0 0 .02em #000, 0 .06em .35em rgba(0,0,0,.85)}
+#app[data-phase="rest"] .time{text-shadow:.03em .03em 0 rgba(60,90,150,.7), 0 .06em .35em rgba(0,0,0,.85)}
+.time .d{display:inline-block;width:.62em;text-align:center}
+.time .c{display:inline-block;width:.3em;text-align:center;transform:translateY(-.08em)}
+.time .t{font-size:.36em;width:1.1em;text-align:left;padding-bottom:.1em;color:var(--mist)}
+.time.beat{animation:beat .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes beat{0%{transform:scale(1.14)}100%{transform:scale(1)}}
+.sub,.next{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 12px;border-radius:999px;background:rgba(8,7,10,.5);
+  text-shadow:0 0 4px #000,0 1px 8px #000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sub{font-size:14px;font-weight:500;letter-spacing:.16em;color:var(--paper)}
+.next{font-size:12.5px;letter-spacing:.12em;color:#d9d3cc}
+.sub:empty,.next:empty{display:none}
+
+/* katana gauge: hilt on the left, light runs to the tip */
+.katana{position:relative;width:min(88vw,440px);height:18px;display:flex;align-items:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,.8))}
+.tsuka{width:22%;height:9px;border-radius:2px;background:repeating-linear-gradient(60deg,#1a1418 0 4px,#5a1220 4px 7px),#1a1418;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.tsuba{width:7px;height:18px;border-radius:3px;background:linear-gradient(#5b4a2c,#2a2116);margin-inline:2px}
+.blade{position:relative;flex:1;height:5px;clip-path:polygon(0 0,94% 0,100% 100%,0 100%);background:linear-gradient(180deg,#e9eef5,#8d97a6 55%,#59606c)}
+.blade i{position:absolute;inset:0;width:calc(var(--fill,0) * 100%);background:linear-gradient(90deg, color-mix(in srgb,var(--p) 70%,#fff), #fff 85%);box-shadow:0 0 12px 3px color-mix(in srgb,var(--p) 70%,transparent);transition:width .25s linear}
+.katana::after{content:"";position:absolute;right:0;top:50%;width:calc(var(--fill,0) * 26px);height:calc(var(--fill,0) * 26px);transform:translate(40%,-50%);border-radius:50%;
+  background:radial-gradient(circle,#fff 0,color-mix(in srgb,var(--p) 60%,transparent) 40%,transparent 70%);opacity:calc(var(--tension,0) * 1.2)}
+
+/* bamboo = rounds */
+.grove{display:flex;align-items:flex-end;justify-content:center;gap:var(--g,8px);height:38px;max-width:100%}
+.bamboo{position:relative;width:var(--w,10px);height:34px;border-radius:2px 2px 1px 1px;
+  background:repeating-linear-gradient(180deg,transparent 0 10px,rgba(30,36,20,.75) 10px 11.5px),linear-gradient(90deg,#4a5436,#a8b283 45%,#5c6744);
+  box-shadow:0 2px 4px rgba(0,0,0,.6);transition:height .5s cubic-bezier(.2,.8,.2,1)}
+.bamboo.cut{height:20px;clip-path:polygon(0 30%,100% 0,100% 100%,0 100%);background:linear-gradient(170deg,#efe6c8 0 18%,transparent 18%),repeating-linear-gradient(180deg,transparent 0 10px,rgba(30,36,20,.75) 10px 11.5px),linear-gradient(90deg,#4a5436,#a8b283 45%,#5c6744)}
+.bamboo.cur::after{content:"";position:absolute;left:50%;top:-10px;width:18px;height:18px;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(circle,#fff,color-mix(in srgb,var(--p) 70%,transparent) 45%,transparent 70%);animation:glint 1.4s ease-in-out infinite}
+@keyframes glint{0%,100%{opacity:.25;transform:translateX(-50%) scale(.6)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}
+
+.laps{display:grid;gap:4px;width:min(100%,300px);font:500 14px var(--font-ui);color:var(--mist);text-shadow:0 1px 6px #000}
+.laps div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-block:3px}
+.laps div:first-child{color:var(--paper)}
+
+/* controls on an ink strip */
+.foot{display:grid;gap:10px;padding-top:12px;position:relative}
+.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;justify-items:center}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font-size:11.5px;font-weight:500;letter-spacing:.14em;color:var(--mist);min-width:0;text-shadow:0 1px 6px #000}
+.ctl .b{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:rgba(8,7,10,.55);border:1px solid rgba(243,237,227,.5);color:var(--paper);transition:transform .15s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ctl .b svg{width:22px;height:22px}
+.ctl .b .tx{font:700 17px var(--font-ui)}
+.ctl.main{color:var(--paper)}
+.ctl.main .b{width:86px;height:86px;border:2px solid var(--p);box-shadow:0 0 0 5px rgba(8,7,10,.5), 0 0 26px color-mix(in srgb,var(--p) 55%,transparent), inset 0 0 18px color-mix(in srgb,var(--p) 30%,transparent)}
+.ctl.main .b svg{width:32px;height:32px}
+.ctl:active .b{transform:scale(.93)}
+.ctl:disabled{opacity:.3;cursor:default}
+.presets{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px;min-height:36px}
+.presets::-webkit-scrollbar{display:none}
+.presets.off{visibility:hidden}
+.chip{flex:none;padding:8px 14px;border-radius:999px;background:rgba(8,7,10,.55);border:1px solid var(--line);font-size:12.5px;font-weight:500;letter-spacing:.06em;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chip.on{border-color:var(--p);color:var(--gold)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(2,2,4,.6);opacity:0;pointer-events:none;transition:opacity .3s;z-index:20}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:86%;overflow-y:auto;overscroll-behavior:contain;
+  background:var(--ink2);border-top:1px solid var(--line);border-radius:20px 20px 0 0;transform:translateY(105%);transition:transform .38s cubic-bezier(.2,.8,.2,1);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px calc(24px + env(safe-area-inset-bottom,0px));
+  -webkit-user-select:auto;user-select:auto}
+.sheet.open{transform:none}
+.sheet-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 0}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sheet-head h2{margin:0;font-size:18px;font-weight:700;text-wrap:balance}
+.done-btn{padding:9px 18px;border-radius:999px;border:0;background:var(--paper);color:var(--ink);font-weight:700;font-size:14px}
+.sec{display:grid;gap:10px}
+.sec h3{margin:0;font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--mist)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.note{margin:0;font-size:13px;line-height:1.7;color:var(--mist)}
+.field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:8px;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:0}
+.lb{font-size:14px;font-weight:500;min-width:0}
+.hint{display:block;font-size:11px;color:var(--mist);margin-top:2px}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
+.stepper button{width:44px;height:44px;border-radius:12px;background:var(--ink);border:1px solid var(--line);display:grid;place-items:center;touch-action:none}
+.stepper button svg{width:18px;height:18px}
+.stepper output{min-width:74px;text-align:center;font:500 17px var(--font-ui);font-variant-numeric:tabular-nums}
+.item{display:flex;align-items:center;gap:8px;padding-block:6px;border-bottom:1px solid var(--line)}
+.item input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
+.item .stepper output{min-width:56px;font-size:15px}
+.item .stepper button{width:38px}
+.x{width:38px;height:44px;border-radius:12px;border:0;background:none;color:var(--mist);display:grid;place-items:center}
+.x svg{width:18px;height:18px}
+.wide{height:46px;border-radius:12px;border:1px dashed var(--line);background:none;color:var(--paper);font-weight:500;font-size:14px}
+.my{display:flex;align-items:center;gap:6px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px;border-bottom:1px solid var(--line)}
+.toggle:last-child{border-bottom:0}
+.sw{position:relative;width:52px;height:30px;flex:none;border-radius:999px;border:0;background:var(--ink);box-shadow:inset 0 0 0 1px var(--line);transition:background .25s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--mist);transition:transform .25s,background .25s}
+.sw[aria-checked="true"]{background:var(--crimson)}
+.sw[aria-checked="true"]::after{transform:translateX(22px);background:#fff}
+
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-150%);z-index:30;max-width:calc(100% - 32px);
+  padding:10px 16px;border-radius:999px;background:var(--ink2);border:1px solid var(--line);font-size:13px;font-weight:500;
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);pointer-events:none;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+
+@media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} .ctl .b{width:52px;height:52px} .ctl.main .b{width:72px;height:72px} .grove{height:30px} .bamboo{height:28px} }
+@media (prefers-reduced-motion:reduce){
+  #app.tense,#app.strike,.time.beat,.bamboo.cur::after{animation:none!important}
+  .scene{transition:opacity .4s}
+  #app[data-phase="work"] .scene[data-s="kamae"].on{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="world" aria-hidden="true">
+  <div class="scene" data-s="kamae" style="background-image:url('assets/kamae.webp')"></div>
+  <div class="scene" data-s="issen" style="background-image:url('assets/issen.webp')"></div>
+  <div class="scene" data-s="noto" style="background-image:url('assets/noto.webp')"></div>
+  <div class="scene" data-s="kanryo" style="background-image:url('assets/kanryo.webp')"></div>
+  <canvas id="leaves"></canvas>
+  <div class="shade"></div>
+  <div class="vignette"></div>
+</div>
+
+<div id="app" data-phase="idle">
+  <div class="world-fx" aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:5"><div class="flash"></div><div class="slash"></div></div>
+  <header class="top">
+    <div class="bar">
+      <div class="brand"><b>O</b>RBIT</div>
+      <button class="icon-btn" id="gear" aria-label="設定を開く"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="モード"></nav>
+  </header>
+
+  <main class="main" id="stage" role="button" tabindex="0" aria-label="タイマー">
+    <div class="phase" id="phase"><span class="kanji" id="kanji">構</span><span class="tx" id="label"></span></div>
+    <div class="time" id="time" aria-live="polite"></div>
+    <div class="katana" id="katana" aria-hidden="true"><div class="tsuka"></div><div class="tsuba"></div><div class="blade"><i></i></div></div>
+    <div class="sub" id="sub"></div>
+    <div class="grove" id="grove" aria-hidden="true"></div>
+    <div class="next" id="next"></div>
+    <div class="laps" id="laps" hidden></div>
+  </main>
+
+  <footer class="foot">
+    <div class="controls" id="controls"></div>
+    <div class="presets" id="presets"></div>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="設定" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'orbit-timer-v1';
+const $ = s => document.querySelector(s);
+const clone = o => JSON.parse(JSON.stringify(o));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const pad = n => String(n).padStart(2, '0');
+
+const MODES = [
+  { id: 'interval', name: 'インターバル' },
+  { id: 'rest', name: 'セット休憩' },
+  { id: 'circuit', name: 'サーキット' },
+  { id: 'countdown', name: 'カウント' },
+  { id: 'stopwatch', name: 'ストップウォッチ' },
+];
+const modeName = id => MODES.find(m => m.id === id).name;
+
+const DEF = {
+  interval: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 },
+  rest: { rest: 90, sets: 5 },
+  circuit: { prep: 10, gap: 15, rounds: 3, roundRest: 60, items: [
+    { name: 'スクワット', dur: 40 }, { name: '腕立て伏せ', dur: 40 }, { name: 'ランジ', dur: 40 },
+    { name: 'プランク', dur: 40 }, { name: 'バーピー', dur: 30 } ] },
+  countdown: { min: 5, sec: 0 },
+  stopwatch: {},
+};
+
+const PRESETS = {
+  interval: [
+    { name: 'タバタ 20/10×8', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 } },
+    { name: 'HIIT 40/20×10', cfg: { prep: 10, work: 40, rest: 20, rounds: 10, sets: 1, setRest: 60 } },
+    { name: '30/30×12', cfg: { prep: 10, work: 30, rest: 30, rounds: 12, sets: 1, setRest: 60 } },
+    { name: 'EMOM 10分', cfg: { prep: 10, work: 60, rest: 0, rounds: 10, sets: 1, setRest: 60 } },
+    { name: 'タバタ×3セット', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 3, setRest: 60 } },
+  ],
+  rest: [
+    { name: '休憩 1分', cfg: { rest: 60 } }, { name: '1分30秒', cfg: { rest: 90 } },
+    { name: '2分', cfg: { rest: 120 } }, { name: '3分', cfg: { rest: 180 } },
+  ],
+  circuit: [
+    { name: '全身 基本', cfg: clone(DEF.circuit) },
+    { name: '体幹', cfg: { prep: 10, gap: 10, rounds: 2, roundRest: 45, items: [
+      { name: 'プランク', dur: 45 }, { name: 'サイドプランク 右', dur: 30 }, { name: 'サイドプランク 左', dur: 30 },
+      { name: 'マウンテンクライマー', dur: 30 }, { name: 'デッドバグ', dur: 40 }, { name: 'ヒップリフト', dur: 40 } ] } },
+  ],
+  countdown: [1, 3, 5, 10, 20].map(m => ({ name: m + '分', cfg: { min: m, sec: 0 } })),
+  stopwatch: [],
+};
+
+// [key, label, min, max, step, hint, kind]
+const FIELDS = {
+  interval: [['prep', '準備', 0, 60, 5], ['work', '運動', 5, 600, 5], ['rest', '休憩', 0, 600, 5, '0 にすると休憩なし'],
+    ['rounds', 'ラウンド数', 1, 30, 1, null, 'n'], ['sets', 'セット数', 1, 10, 1, null, 'n'], ['setRest', 'セット間の休憩', 0, 600, 15]],
+  rest: [['rest', '休憩時間', 15, 600, 15], ['sets', '目標セット数', 1, 20, 1, null, 'n']],
+  circuit: [['prep', '準備', 0, 60, 5], ['gap', '種目間の休憩', 0, 120, 5], ['rounds', 'ラウンド数', 1, 10, 1, null, 'n'], ['roundRest', 'ラウンド間の休憩', 0, 600, 15]],
+  countdown: [['min', '分', 0, 180, 1, null, 'n'], ['sec', '秒', 0, 55, 5, null, 'n']],
+};
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="currentColor"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4.2" height="14" rx="1.3"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.3"/></svg>',
+  reset: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg>',
+  skip: '<svg viewBox="0 0 24 24"><path d="M5.5 5.5v13l9.5-6.5z" fill="currentColor"/><path d="M18.5 5.5v13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+  cut: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 17L21 6"/><path d="M15 15l3 3" opacity=".6"/></svg>',
+  lap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4M6 4h11l-2.2 4L17 12H6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+
+/* ---------- storage ---------- */
+function load() {
+  const s = { mode: 'interval', cfg: clone(DEF), prefs: { sound: true, voice: false, vibrate: true }, custom: {} };
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  if (d && typeof d === 'object') {
+    if (MODES.some(m => m.id === d.mode)) s.mode = d.mode;
+    if (d.cfg) for (const k in DEF) if (d.cfg[k]) s.cfg[k] = Object.assign(clone(DEF[k]), d.cfg[k]);
+    if (d.prefs) Object.assign(s.prefs, d.prefs);
+    if (d.custom && typeof d.custom === 'object') s.custom = d.custom;
+  }
+  return s;
+}
+const store = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+const cfg = () => store.cfg[store.mode];
+
+/* ---------- format ---------- */
+function clock(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+function remain(sec) { const c = Math.max(0, Math.ceil(sec - 1e-6)); return c < 60 ? String(c) : clock(c); }
+function jp(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m ? (s ? `${m}分${s}秒` : `${m}分`) : `${s}秒`; }
+function summary(mode, c) {
+  if (mode === 'interval') return `${c.work}/${c.rest} ×${c.rounds}` + (c.sets > 1 ? ` ×${c.sets}セット` : '');
+  if (mode === 'circuit') return `${c.items.length}種目 ×${c.rounds}`;
+  if (mode === 'countdown') return jp(c.min * 60 + c.sec);
+  if (mode === 'rest') return `休憩${jp(c.rest)} ×${c.sets}`;
+  return '';
+}
+
+/* ---------- sound: taiko, blade, bell (all synthesized) ---------- */
+let ac = null, noiseBuf = null;
+function audio() {
+  if (!ac) { const C = window.AudioContext || window.webkitAudioContext; if (C) try { ac = new C(); } catch (e) {} }
+  if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+  if (ac && !noiseBuf) {
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 1.2, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return ac;
+}
+function env(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + d); }
+function osc(type, f0, f1, at, d, vol) {
+  const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + d);
+  env(g, t, 0.008, vol, d); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d + 0.05);
+}
+function noise(at, d, vol, f0, f1, q) {
+  const t = ac.currentTime + at, s = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = noiseBuf; bp.type = 'bandpass'; bp.Q.value = q || 1.2;
+  bp.frequency.setValueAtTime(f0, t); if (f1) bp.frequency.exponentialRampToValueAtTime(f1, t + d);
+  env(g, t, 0.01, vol, d); s.connect(bp).connect(g).connect(ac.destination); s.start(t); s.stop(t + d + 0.05);
+}
+const CUES = {
+  drum: () => { osc('sine', 150, 55, 0, 0.45, 0.7); noise(0, 0.06, 0.25, 900, 300, 0.8); },         // taiko, last 3 seconds
+  bigdrum: () => { osc('sine', 120, 42, 0, 0.8, 0.9); noise(0, 0.1, 0.35, 700, 200, 0.7); },
+  draw: () => { noise(0, 0.5, 0.12, 3000, 9000, 6); osc('sine', 2400, 2600, 0.05, 0.6, 0.05); },     // work starts: blade leaves the scabbard slightly
+  slash: () => {                                                                                     // zero: one draw-cut
+    noise(0, 0.28, 0.6, 600, 7000, 0.9);
+    osc('sine', 2637, 0, 0.12, 1.4, 0.16); osc('sine', 3951, 0, 0.12, 1.0, 0.07);
+    osc('sine', 90, 38, 0.1, 0.7, 0.8);
+  },
+  sheathe: () => { noise(0, 0.35, 0.1, 5000, 1500, 4); osc('triangle', 520, 0, 0.32, 0.25, 0.12); }, // rest: sword back in the scabbard
+  bell: () => { [392, 588, 784].forEach((f, i) => osc('sine', f, 0, i * 0.02, 2.6, 0.18 / (i + 1))); },
+  gong: () => { [98, 147, 196, 294].forEach((f, i) => osc('sine', f, f * 0.98, 0, 4 - i * 0.6, 0.35 / (i + 1))); noise(0, 0.2, 0.2, 400, 120, 0.6); },
+  lap: () => osc('sine', 1760, 0, 0, 0.12, 0.08),
+};
+function play(n) { if (store.prefs.sound && ac) try { CUES[n](); } catch (e) {} }
+function buzz(p) { if (store.prefs.vibrate && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
+function say(t) {
+  if (!t || !store.prefs.voice || !('speechSynthesis' in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ja-JP'; u.rate = 1.05; speechSynthesis.speak(u); } catch (e) {}
+}
+let wl = null;
+async function wake(on) {
+  try {
+    if (on) { if (!wl && 'wakeLock' in navigator) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } }
+    else if (wl) { const w = wl; wl = null; await w.release(); }
+  } catch (e) { wl = null; }
+}
+
+/* ---------- segment engine (interval / circuit / countdown) ---------- */
+function buildSegs(mode, c) {
+  const s = [];
+  if (mode === 'interval') {
+    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '準備', sub: `${c.rounds}ラウンド` + (c.sets > 1 ? ` × ${c.sets}セット` : ''), orbs: c.rounds, lit: 0, orb: 0, speak: '構え' });
+    for (let st = 0; st < c.sets; st++) {
+      for (let r = 0; r < c.rounds; r++) {
+        const sub = `ラウンド ${r + 1} / ${c.rounds}` + (c.sets > 1 ? `　セット ${st + 1} / ${c.sets}` : '');
+        const last = st === c.sets - 1 && r === c.rounds - 1;
+        s.push({ type: 'work', dur: c.work, label: last ? 'ラスト' : '運動', sub, orbs: c.rounds, lit: r, orb: r, speak: last ? 'ラスト' : '' });
+        if (c.rest > 0 && r < c.rounds - 1) s.push({ type: 'rest', dur: c.rest, label: '休憩', sub, orbs: c.rounds, lit: r + 1, orb: r + 1, speak: '' });
+      }
+      if (st < c.sets - 1 && c.setRest > 0) s.push({ type: 'rest', dur: c.setRest, label: 'セット間休憩', sub: `セット ${st + 1} / ${c.sets} 完了`, orbs: c.rounds, lit: c.rounds, orb: -1, speak: 'セット間の休憩' });
+    }
+  } else if (mode === 'circuit') {
+    const n = c.items.length;
+    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '準備', sub: `${n}種目 × ${c.rounds}ラウンド`, orbs: n, lit: 0, orb: 0, speak: '最初は' + c.items[0].name });
+    for (let r = 0; r < c.rounds; r++) {
+      c.items.forEach((it, i) => {
+        const sub = `種目 ${i + 1} / ${n}　ラウンド ${r + 1} / ${c.rounds}`;
+        s.push({ type: 'work', dur: it.dur, label: it.name || `種目${i + 1}`, sub, orbs: n, lit: i, orb: i, speak: it.name, long: true });
+        if (c.gap > 0 && i < n - 1) s.push({ type: 'rest', dur: c.gap, label: '休憩', sub, orbs: n, lit: i + 1, orb: i + 1, speak: '次は' + c.items[i + 1].name });
+      });
+      if (r < c.rounds - 1 && c.roundRest > 0) s.push({ type: 'rest', dur: c.roundRest, label: 'ラウンド間休憩', sub: `ラウンド ${r + 1} / ${c.rounds} 完了`, orbs: n, lit: n, orb: -1, speak: 'ラウンド間の休憩' });
+    }
+  } else if (mode === 'countdown') {
+    s.push({ type: 'work', dur: Math.max(5, c.min * 60 + c.sec), label: '残り', sub: '', orbs: 0, lit: 0, orb: -1, speak: '' });
+  }
+  return s;
+}
+const T = { status: 'idle', segs: [], idx: 0, segStart: 0, pausedAt: 0, beep: '' };
+function rebuild() { T.segs = buildSegs(store.mode, cfg()); T.idx = 0; T.status = 'idle'; T.beep = ''; }
+function segStartRun() {
+  audio();
+  if (T.status === 'idle' || T.status === 'done') { rebuild(); T.status = 'running'; T.segStart = Date.now(); enter(false, null); }
+  else if (T.status === 'paused') { T.segStart += Date.now() - T.pausedAt; T.status = 'running'; }
+  wake(true);
+}
+function segPause() { T.pausedAt = Date.now(); T.status = 'paused'; wake(false); }
+function segSkip() {
+  const now = T.status === 'paused' ? T.pausedAt : Date.now(), prev = T.segs[T.idx];
+  T.idx++; T.segStart = now;
+  if (T.idx >= T.segs.length) segFinish(prev); else enter(false, prev);
+}
+// prev = the segment that just ended; finishing a work segment is the strike
+function enter(quiet, prev) {
+  const s = T.segs[T.idx];
+  if (prev && prev.type === 'work' && !quiet) strike();
+  if (quiet) return;
+  if (s.type === 'work') { if (!prev || prev.type !== 'work') play('draw'); buzz([60, 40, 60]); }
+  else if (s.type === 'rest') { setTimeout(() => play('sheathe'), 700); buzz(200); }
+  else play('bell');
+  say(s.speak);
+}
+function segFinish(prev) {
+  T.status = 'done'; T.idx = T.segs.length - 1;
+  if (prev && prev.type === 'work') strike(true);
+  setTimeout(() => { play('gong'); say('お見事'); }, 900);
+  buzz([200, 100, 200, 100, 500]); wake(false);
+}
+function segTick() {
+  if (T.status !== 'running') return;
+  const now = Date.now();
+  while (now - T.segStart >= T.segs[T.idx].dur * 1000) {
+    const prev = T.segs[T.idx];
+    T.segStart += prev.dur * 1000; T.idx++;
+    if (T.idx >= T.segs.length) { segFinish(prev); return; }
+    enter(now - T.segStart > 1500, prev); // quiet while catching up after the app was in the background
+  }
+  const s = T.segs[T.idx], c = Math.ceil(s.dur - (now - T.segStart) / 1000);
+  if (c >= 1 && c <= 3 && s.dur > 3) {
+    const key = T.idx + ':' + c;
+    if (T.beep !== key) { T.beep = key; play(c === 1 && s.type === 'work' ? 'bigdrum' : 'drum'); buzz(40); beat(); }
+  }
+}
+function viewSeg() {
+  const segs = T.segs, c = cfg();
+  const total = segs.reduce((a, s) => a + s.dur, 0);
+  const first = segs.find(s => s.type !== 'prep') || segs[0];
+  if (T.status === 'idle') {
+    let sub = '';
+    if (store.mode === 'interval') sub = `運動${jp(c.work)}　休憩${jp(c.rest)}　× ${c.rounds}` + (c.sets > 1 ? ` × ${c.sets}` : '');
+    else if (store.mode === 'circuit') sub = `${c.items.length}種目 × ${c.rounds}ラウンド`;
+    return { phase: 'idle', label: modeName(store.mode), time: clock(total), sub, next: 'タップで構える', fill: 0, rounds: { n: first.orbs, lit: 0, cur: -1 } };
+  }
+  if (T.status === 'done') return { phase: 'done', label: '完了', time: clock(total), sub: 'お見事', next: `合計 ${jp(total)}`, fill: 1, rounds: { n: first.orbs, lit: first.orbs, cur: -1 } };
+  const s = segs[T.idx], now = T.status === 'paused' ? T.pausedAt : Date.now();
+  const rem = Math.max(0, s.dur - (now - T.segStart) / 1000), nx = segs[T.idx + 1];
+  const f = rem / s.dur;
+  return {
+    phase: s.type, label: T.status === 'paused' ? '一時停止中' : s.label, long: s.long && T.status !== 'paused',
+    time: remain(rem), sub: s.sub, next: nx ? `次　${nx.label}　${jp(nx.dur)}` : 'これで最後',
+    fill: s.type === 'work' ? 1 - f : f, charge: s.type === 'work' ? 1 - f : 0,
+    tension: s.type === 'work' && T.status === 'running' ? clamp((3.2 - rem) / 3.2, 0, 1) : 0,
+    rounds: { n: s.orbs, lit: s.lit, cur: s.orb },
+  };
+}
+
+/* ---------- set rest (gym: tap after each set = the cut) ---------- */
+const R = { phase: 'idle', sets: 0, setStart: 0, restStart: 0, restDur: 0, beep: '' };
+function completeSet() {
+  audio();
+  const c = cfg();
+  R.sets++;
+  strike(R.sets >= c.sets);
+  if (R.sets >= c.sets) {
+    R.phase = 'done'; setTimeout(() => { play('gong'); say('全セット完了。お見事'); }, 900); buzz([200, 100, 200, 100, 500]); wake(false);
+  } else {
+    R.phase = 'rest'; R.restStart = Date.now(); R.restDur = c.rest; R.beep = '';
+    setTimeout(() => play('sheathe'), 700); buzz(200); wake(true);
+  }
+}
+function endRest() {
+  R.phase = 'set'; R.setStart = Date.now();
+  play('draw'); buzz([60, 40, 60]); say(R.sets + 1 === cfg().sets ? 'ラストセット' : `${R.sets + 1}セット目`);
+}
+function adjRest(d) {
+  R.restDur = Math.max(5, R.restDur + d);
+  if (R.restDur - (Date.now() - R.restStart) / 1000 <= 0) endRest();
+  toast(`休憩を${Math.abs(d)}秒${d > 0 ? 'のばしました' : '短くしました'}`);
+}
+function restTick() {
+  if (R.phase !== 'rest') return;
+  const rem = R.restDur - (Date.now() - R.restStart) / 1000;
+  if (rem <= 0) { endRest(); return; }
+  const c = Math.ceil(rem);
+  if (c <= 3 && R.beep !== c) { R.beep = c; play('drum'); buzz(40); beat(); }
+}
+function viewRest() {
+  const c = cfg(), rounds = { n: c.sets, lit: R.sets, cur: R.sets };
+  if (R.phase === 'idle') return { phase: 'idle', label: 'セット休憩', time: clock(c.rest), sub: `目標 ${c.sets}セット`, next: 'セットが終わったらタップで斬る', fill: 0, rounds: { n: c.sets, lit: 0, cur: 0 } };
+  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(c.sets), sub: 'セット完了', next: 'お見事', fill: 1, rounds: { n: c.sets, lit: c.sets, cur: -1 } };
+  if (R.phase === 'set') {
+    const el = (Date.now() - R.setStart) / 1000;
+    return { phase: 'work', label: `セット ${R.sets + 1} / ${c.sets}`, time: clock(el), sub: R.sets + 1 === c.sets ? 'ラストセット' : 'セット中', next: '終わったらタップで斬る', fill: (el % 60) / 60, charge: Math.min(1, el / 60), rounds };
+  }
+  const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
+  return { phase: 'rest', label: '休憩', time: remain(rem), sub: `次は ${R.sets + 1}セット目`, next: `${R.sets} / ${c.sets} セット完了`, fill: rem / R.restDur, rounds };
+}
+
+/* ---------- stopwatch ---------- */
+const W = { status: 'idle', start: 0, acc: 0, laps: [] };
+const swEl = () => W.acc + (W.status === 'running' ? Date.now() - W.start : 0);
+function swStart() { audio(); W.start = Date.now(); W.status = 'running'; play('draw'); wake(true); }
+function swPause() { W.acc += Date.now() - W.start; W.status = 'paused'; wake(false); }
+function swReset() { W.status = 'idle'; W.acc = 0; W.laps = []; }
+function swLap() { const e = swEl(), prev = W.laps.length ? W.laps[W.laps.length - 1].at : 0; W.laps.push({ at: e, d: e - prev }); play('lap'); buzz(30); }
+function viewSW() {
+  const e = swEl(), n = W.laps.length;
+  return { phase: W.status === 'running' ? 'work' : 'idle', label: W.status === 'idle' ? 'ストップウォッチ' : W.status === 'paused' ? '一時停止中' : '計測中',
+    time: clock(e / 1000), tenth: Math.floor(e % 1000 / 100), sub: n ? `ラップ ${n}` : '', next: W.status === 'idle' ? 'タップでスタート' : '',
+    fill: (e / 1000 % 60) / 60, rounds: { n: 0, lit: 0, cur: -1 } };
+}
+
+/* ---------- mode-level dispatch ---------- */
+function isActive() {
+  const m = store.mode;
+  if (m === 'rest') return R.phase === 'set' || R.phase === 'rest';
+  if (m === 'stopwatch') return W.status === 'running';
+  return T.status === 'running';
+}
+function busy() {
+  const m = store.mode;
+  if (m === 'rest') return R.phase === 'set' || R.phase === 'rest';
+  if (m === 'stopwatch') return W.status !== 'idle';
+  return T.status === 'running' || T.status === 'paused';
+}
+function resetAll() { rebuild(); R.phase = 'idle'; R.sets = 0; swReset(); wake(false); }
+function view() { return store.mode === 'rest' ? viewRest() : store.mode === 'stopwatch' ? viewSW() : viewSeg(); }
+function logic() { if (store.mode === 'rest') restTick(); else if (store.mode !== 'stopwatch') segTick(); }
+
+function controls() {
+  const m = store.mode, A = f => () => { f(); render(); };
+  const gear = { ic: 'gear', t: '設定', fn: openSheet };
+  if (m === 'rest') {
+    if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(endRest) }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
+    if (R.phase === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(resetAll) }, c: { ic: 'reset', t: 'もう一度', fn: A(resetAll), noStage: true }, r: gear };
+    const last = R.sets + 1 >= cfg().sets;
+    return { l: { ic: 'reset', t: 'リセット', fn: A(resetAll), dis: R.phase === 'idle' }, c: { ic: 'cut', t: last ? '最後のセット完了' : 'セット完了', fn: A(completeSet) }, r: gear };
+  }
+  if (m === 'stopwatch') {
+    if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
+    return { l: { ic: 'reset', t: 'リセット', fn: A(swReset), dis: W.status === 'idle' }, c: { ic: 'play', t: W.status === 'paused' ? '再開' : 'スタート', fn: A(swStart) }, r: { ic: 'lap', t: 'ラップ', dis: true } };
+  }
+  if (T.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(segPause) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
+  if (T.status === 'paused') return { l: { ic: 'reset', t: 'リセット', fn: A(() => { rebuild(); wake(false); }) }, c: { ic: 'play', t: '再開', fn: A(segStartRun) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
+  if (T.status === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(rebuild) }, c: { ic: 'reset', t: 'もう一度', fn: A(segStartRun), noStage: true }, r: gear };
+  return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'play', t: 'スタート', fn: A(segStartRun) }, r: gear };
+}
+
+/* ---------- the strike ---------- */
+let striking = 0, burst = 0;
+function strike(final) {
+  play('slash'); buzz([30, 30, 260]);
+  app.classList.remove('strike'); void app.offsetWidth; app.classList.add('strike');
+  showScene('issen', true);
+  burst = 1;
+  clearTimeout(striking);
+  striking = setTimeout(() => { app.classList.remove('strike'); striking = 0; last.scene = ''; render(); }, final ? 1700 : 1250);
+}
+
+/* ---------- rendering ---------- */
+const app = $('#app'), stage = $('#stage'), timeEl = $('#time'), labelEl = $('#label'), kanjiEl = $('#kanji'), phaseEl = $('#phase');
+const subEl = $('#sub'), nextEl = $('#next'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
+const root = document.documentElement, scenes = [...document.querySelectorAll('.scene')];
+const KANJI = { idle: '構', prep: '支', work: '斬', rest: '納', done: '極' };
+const SCENE = { idle: 'kamae', prep: 'kamae', work: 'kamae', rest: 'noto', done: 'kanryo' };
+
+let last = {}, ctlSig = '', ctlFns = {}, groveN = -1;
+function showScene(name, fast) {
+  if (last.scene === name) return;
+  last.scene = name;
+  scenes.forEach(el => { el.classList.toggle('fast', !!fast); el.classList.toggle('on', el.dataset.s === name); });
+}
+function timeHTML(str, tenth) {
+  let h = '';
+  for (const ch of str) h += ch === ':' ? '<span class="c">:</span>' : `<span class="d">${ch}</span>`;
+  if (tenth != null) h += `<span class="t">.${tenth}</span>`;
+  return h;
+}
+function setText(el, k, v) { if (last[k] !== v) { last[k] = v; el.textContent = v; } }
+function render() {
+  const v = view();
+  if (app.dataset.phase !== v.phase) app.dataset.phase = v.phase;
+  if (!striking) showScene(SCENE[v.phase] || 'kamae', false);
+  setText(kanjiEl, 'kanji', KANJI[v.phase] || '構');
+  setText(labelEl, 'label', v.label);
+  phaseEl.classList.toggle('long', !!v.long);
+  setText(subEl, 'sub', v.sub || '');
+  setText(nextEl, 'next', v.next || '');
+  const tk = v.time + '|' + v.tenth;
+  if (last.time !== tk) {
+    last.time = tk;
+    timeEl.innerHTML = timeHTML(v.time, v.tenth);
+    const len = v.time.length + (v.tenth != null ? 1.4 : 0);
+    timeEl.style.setProperty('--k', len <= 2 ? .52 : len <= 4 ? .34 : len <= 5.4 ? .27 : .21);
+  }
+  katana.style.setProperty('--fill', clamp(v.fill || 0, 0, 1).toFixed(3));
+  const tension = v.tension || 0;
+  root.style.setProperty('--charge', (v.charge || 0).toFixed(3));
+  root.style.setProperty('--tension', tension.toFixed(3));
+  app.style.setProperty('--tension', tension.toFixed(3));
+  app.classList.toggle('tense', tension > 0.05 && !striking);
+  renderGrove(v.rounds);
+  fx.charge = v.charge || 0; fx.tension = tension; fx.phase = v.phase;
+  const c = controls();
+  const sig = ['l', 'c', 'r'].map(k => [c[k].ic, c[k].tx, c[k].t, !!c[k].dis].join(',')).join('|');
+  ctlFns = c;
+  if (sig !== ctlSig) {
+    ctlSig = sig;
+    ctlEl.innerHTML = ['l', 'c', 'r'].map(k => {
+      const b = c[k];
+      return `<button class="ctl${k === 'c' ? ' main' : ''}" data-k="${k}" ${b.dis ? 'disabled' : ''}><span class="b">${b.tx ? `<span class="tx">${b.tx}</span>` : ICON[b.ic]}</span><span>${b.t}</span></button>`;
+    }).join('');
+  }
+  presetsEl.classList.toggle('off', busy() || PRESETS[store.mode].length + (store.custom[store.mode] || []).length === 0);
+  if (store.mode === 'stopwatch') {
+    lapsEl.hidden = W.laps.length === 0;
+    if (last.laps !== W.laps.length) {
+      const lk = last.laps = W.laps.length;
+      lapsEl.innerHTML = W.laps.slice(-3).reverse().map((l, i) => `<div><span>ラップ ${lk - i}</span><span>${clock(l.d / 1000)}.${Math.floor(l.d % 1000 / 100)}</span></div>`).join('');
+    }
+  } else lapsEl.hidden = true;
+}
+function renderGrove(o) {
+  const n = clamp(o.n || 0, 0, 30);
+  if (n !== groveN) {
+    groveN = n;
+    grove.hidden = n === 0;
+    const w = n <= 8 ? 11 : n <= 12 ? 9 : n <= 20 ? 7 : 5;
+    grove.style.setProperty('--w', w + 'px'); grove.style.setProperty('--g', (n <= 8 ? 14 : n <= 12 ? 10 : n <= 20 ? 6 : 4) + 'px');
+    grove.innerHTML = Array.from({ length: n }, () => '<i class="bamboo"></i>').join('');
+    last.grove = '';
+  }
+  const k = o.lit + ':' + o.cur;
+  if (last.grove === k) return;
+  last.grove = k;
+  [...grove.children].forEach((el, i) => { el.classList.toggle('cut', i < o.lit); el.classList.toggle('cur', i === o.cur && i >= o.lit); });
+}
+function beat() { timeEl.classList.remove('beat'); void timeEl.offsetWidth; timeEl.classList.add('beat'); }
+let toastT = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2000); }
+
+/* ---------- falling maple leaves: drift, slow down before the cut, burst on the cut ---------- */
+const fx = { charge: 0, tension: 0, phase: 'idle' };
+const cv = $('#leaves'), cx = cv.getContext('2d');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let leaves = [], cw = 0, ch = 0, dpr = 1;
+function sizeCanvas() {
+  dpr = Math.min(2, window.devicePixelRatio || 1); cw = innerWidth; ch = innerHeight;
+  cv.width = cw * dpr; cv.height = ch * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function newLeaf(y) {
+  return { x: Math.random() * cw, y: y ?? -20 - Math.random() * ch * .3, s: 5 + Math.random() * 8, r: Math.random() * 6.28, vr: (Math.random() - .5) * .06,
+    vx: (Math.random() - .3) * .5, vy: .35 + Math.random() * .6, sw: Math.random() * 6.28, hue: Math.random() < .2 ? 18 : 352 - Math.random() * 10, bx: 0, by: 0 };
+}
+// a maple leaf: five lobes of different lengths, toothed edges, a stem; it flutters by squashing on one axis
+function drawLeaf(l) {
+  cx.save(); cx.translate(l.x, l.y); cx.rotate(l.r); cx.scale(Math.cos(l.sw * 1.7) * .9 + .1, 1);
+  const s = l.s;
+  cx.fillStyle = `hsla(${l.hue}, 76%, ${30 + l.s * 1.4}%, .82)`;
+  cx.beginPath(); cx.moveTo(0, s * .15);
+  for (const [deg, len] of [[150, .55], [30, .82], [-30, .82], [-90, 1], [-150, .55]].reverse()) {
+    const a = deg * Math.PI / 180, w = .32, r = s * len;
+    cx.lineTo(Math.cos(a - w) * r * .45, Math.sin(a - w) * r * .45);
+    cx.lineTo(Math.cos(a - w * .45) * r * .8, Math.sin(a - w * .45) * r * .8);
+    cx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    cx.lineTo(Math.cos(a + w * .45) * r * .8, Math.sin(a + w * .45) * r * .8);
+    cx.lineTo(Math.cos(a + w) * r * .45, Math.sin(a + w) * r * .45);
+  }
+  cx.closePath(); cx.fill();
+  cx.strokeStyle = `hsla(${l.hue}, 60%, 22%, .8)`; cx.lineWidth = Math.max(.8, s * .08);
+  cx.beginPath(); cx.moveTo(0, s * .15); cx.lineTo(0, s * .75); cx.stroke();
+  cx.restore();
+}
+function stepLeaves() {
+  if (reduced) return;
+  const want = fx.phase === 'rest' ? 10 : fx.phase === 'work' ? 18 + Math.round(fx.charge * 26) : 14;
+  while (leaves.length < want) leaves.push(newLeaf(leaves.length < 4 ? Math.random() * ch : undefined));
+  // time slows in the last seconds before the cut
+  const speed = fx.phase === 'rest' ? .55 : 1 - fx.tension * .85;
+  if (burst) { leaves.forEach(l => { const dx = l.x - cw / 2, dy = l.y - ch * .47, d = Math.hypot(dx, dy) || 1; l.bx = dx / d * (8 + Math.random() * 10); l.by = dy / d * (6 + Math.random() * 8); }); burst = 0; }
+  cx.clearRect(0, 0, cw, ch);
+  for (let i = leaves.length - 1; i >= 0; i--) {
+    const l = leaves[i];
+    l.sw += .02 * speed; l.x += (l.vx + Math.sin(l.sw) * .6) * speed + l.bx; l.y += l.vy * speed + l.by; l.r += l.vr * speed;
+    l.bx *= .9; l.by *= .9;
+    if (l.y > ch + 30 || l.x < -40 || l.x > cw + 40) { if (leaves.length > want) leaves.splice(i, 1); else leaves[i] = newLeaf(); continue; }
+    drawLeaf(l);
+  }
+}
+addEventListener('resize', sizeCanvas); sizeCanvas();
+
+/* ---------- tabs & presets ---------- */
+let pendingMode = null, pendingT = 0;
+function renderTabs() {
+  $('#tabs').innerHTML = MODES.map(m => `<button class="tab" role="tab" data-m="${m.id}" aria-selected="${m.id === store.mode}">${m.name}</button>`).join('');
+  const cur = $('#tabs [aria-selected="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function switchMode(id) {
+  if (id === store.mode) return;
+  if (busy() && pendingMode !== id) {
+    pendingMode = id; clearTimeout(pendingT); pendingT = setTimeout(() => { pendingMode = null; }, 2600);
+    toast('もう一度タップで切り替え（今のタイマーはリセット）'); return;
+  }
+  pendingMode = null; store.mode = id; save(); resetAll(); renderTabs(); renderPresets(); render();
+}
+function presetOn(p) { const c = cfg(); return Object.keys(p.cfg).every(k => JSON.stringify(c[k]) === JSON.stringify(p.cfg[k])); }
+function allPresets() { return PRESETS[store.mode].concat(store.custom[store.mode] || []); }
+function renderPresets() { presetsEl.innerHTML = allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join(''); }
+function applyPreset(i) {
+  const p = allPresets()[i]; if (!p) return;
+  Object.assign(cfg(), clone(p.cfg)); save(); rebuild(); R.phase = 'idle'; R.sets = 0;
+  renderPresets(); render(); if (sheetOpen) buildSheet();
+  toast(`${p.name} にしました`);
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+/* ---------- settings sheet ---------- */
+const sheet = $('#sheet'), scrim = $('#scrim');
+let sheetOpen = false;
+function openSheet() { buildSheet(); sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
+function closeSheet() { sheetOpen = false; sheet.classList.remove('open'); scrim.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+function fmtField(f, v) { return f[6] === 'n' ? String(v) : jp(v); }
+function stepper(id, val, attrs) {
+  return `<div class="stepper"><button ${attrs} data-d="-1" aria-label="減らす">${ICON.minus}</button><output id="${id}">${val}</output><button ${attrs} data-d="1" aria-label="増やす">${ICON.plus}</button></div>`;
+}
+function buildSheet() {
+  const m = store.mode, c = cfg(), b = busy();
+  let h = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${modeName(m)}の設定</h2><button class="done-btn" data-act="close">完了</button></div>`;
+  if (m !== 'stopwatch') {
+    if (b) h += `<p class="note">タイマーが動いている間は時間を変えられません。リセットすると変えられます。</p>`;
+    else {
+      h += `<div class="sec"><h3>プリセット</h3><div class="chips">${allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('')}</div></div>`;
+      h += `<div class="sec"><h3>時間と回数</h3><div class="fields">` + FIELDS[m].map(f =>
+        `<div class="field"><span class="lb">${f[1]}${f[5] ? `<span class="hint">${f[5]}</span>` : ''}</span>${stepper('f-' + f[0], fmtField(f, c[f[0]]), `data-f="${f[0]}"`)}</div>`).join('') + `</div></div>`;
+      if (m === 'circuit') {
+        h += `<div class="sec"><h3>種目（上から順に）</h3><div>` + c.items.map((it, i) =>
+          `<div class="item"><input id="item-${i}" data-name="${i}" value="${esc(it.name)}" maxlength="20" aria-label="種目${i + 1}の名前">${stepper('it-' + i, jp(it.dur), `data-it="${i}"`)}<button class="x" data-del="${i}" aria-label="種目${i + 1}を消す" ${c.items.length <= 1 ? 'disabled' : ''}>${ICON.x}</button></div>`).join('') +
+          `</div>${c.items.length < 12 ? '<button class="wide" data-act="add">＋ 種目を追加</button>' : ''}</div>`;
+      }
+      const mine = store.custom[m] || [];
+      h += `<div class="sec"><h3>マイプリセット</h3>` +
+        (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS[m].length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '<p class="note">よく使う設定を保存すると、画面の下にボタンが出ます。</p>') +
+        (mine.length < 6 ? `<button class="wide" data-act="savepreset">今の設定を保存（${esc(summary(m, c))}）</button>` : '') + `</div>`;
+    }
+  }
+  const tg = (k, label, hint) => `<div class="toggle"><span class="lb">${label}<span class="hint">${hint}</span></span><button class="sw" role="switch" data-pref="${k}" aria-checked="${!!store.prefs[k]}" aria-label="${label}"></button></div>`;
+  h += `<div class="sec"><h3>合図</h3><div>` +
+    tg('sound', '音', '残り3秒の太鼓、0秒の斬撃、休憩の納刀。iPhone はマナーモード中だと鳴りません') +
+    tg('voice', '声で知らせる', '「ラスト」や種目名を読み上げます') +
+    tg('vibrate', '振動', 'Android のみ対応') +
+    `</div><button class="wide" data-act="test">斬撃の音と演出を試す</button></div></div>`;
+  sheet.innerHTML = h;
+}
+function changeField(k, d) {
+  const f = FIELDS[store.mode].find(x => x[0] === k), c = cfg();
+  c[k] = clamp(c[k] + d * f[4], f[2], f[3]);
+  if (store.mode === 'countdown' && c.min === 0 && c.sec === 0) c.sec = 5;
+  save(); rebuild();
+  const out = $('#f-' + k); if (out) out.textContent = fmtField(f, c[k]);
+  if (store.mode === 'countdown') { const s = $('#f-sec'); if (s) s.textContent = String(c.sec); }
+  refreshChips(); render();
+}
+function changeItem(i, d) {
+  const it = cfg().items[i]; it.dur = clamp(it.dur + d * 5, 5, 300);
+  save(); rebuild(); const out = $('#it-' + i); if (out) out.textContent = jp(it.dur); refreshChips(); render();
+}
+function refreshChips() {
+  sheet.querySelectorAll('.chip[data-p]').forEach(el => el.classList.toggle('on', presetOn(allPresets()[+el.dataset.p])));
+  renderPresets();
+}
+let holdT = 0, holdI = 0;
+function stopHold() { clearTimeout(holdT); clearInterval(holdI); }
+sheet.addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-d]'); if (!b) return;
+  e.preventDefault();
+  const d = +b.dataset.d, run = () => b.dataset.f ? changeField(b.dataset.f, d) : changeItem(+b.dataset.it, d);
+  run(); stopHold(); holdT = setTimeout(() => { holdI = setInterval(run, 70); }, 380);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => sheet.addEventListener(t, stopHold));
+sheet.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.dataset.d) return;
+  const m = store.mode, c = cfg();
+  if (t.dataset.p != null) return applyPreset(+t.dataset.p);
+  if (t.dataset.pref) { store.prefs[t.dataset.pref] = !store.prefs[t.dataset.pref]; t.setAttribute('aria-checked', store.prefs[t.dataset.pref]); save(); audio(); return; }
+  if (t.dataset.del != null) { c.items.splice(+t.dataset.del, 1); save(); rebuild(); buildSheet(); renderPresets(); render(); return; }
+  if (t.dataset.mydel != null) { store.custom[m].splice(+t.dataset.mydel, 1); save(); buildSheet(); renderPresets(); render(); return; }
+  const act = t.dataset.act;
+  if (act === 'close') closeSheet();
+  else if (act === 'add') { c.items.push({ name: `種目${c.items.length + 1}`, dur: 30 }); save(); rebuild(); buildSheet(); render(); const inp = $('#item-' + (c.items.length - 1)); if (inp) inp.focus(); }
+  else if (act === 'savepreset') { (store.custom[m] = store.custom[m] || []).push({ name: summary(m, c), cfg: clone(c) }); save(); buildSheet(); renderPresets(); render(); toast('マイプリセットに保存しました'); }
+  else if (act === 'test') { audio(); const was = store.prefs.sound; store.prefs.sound = true; closeSheet(); setTimeout(() => { strike(); store.prefs.sound = was; }, 350); }
+});
+sheet.addEventListener('input', e => { const i = e.target.dataset.name; if (i == null) return; cfg().items[+i].name = e.target.value.trim(); save(); rebuild(); render(); });
+scrim.addEventListener('click', closeSheet);
+
+/* ---------- events ---------- */
+$('#gear').addEventListener('click', openSheet);
+$('#tabs').addEventListener('click', e => { const t = e.target.closest('[data-m]'); if (t) switchMode(t.dataset.m); });
+presetsEl.addEventListener('click', e => { const t = e.target.closest('[data-p]'); if (t) applyPreset(+t.dataset.p); });
+ctlEl.addEventListener('click', e => { const t = e.target.closest('[data-k]'); if (t && !t.disabled) { const b = ctlFns[t.dataset.k]; if (b && b.fn) b.fn(); } });
+function stageAction() { const c = ctlFns.c || controls().c; if (c.fn && !c.noStage && !c.dis) c.fn(); }
+stage.addEventListener('click', stageAction);
+document.addEventListener('keydown', e => {
+  if (sheetOpen) { if (e.key === 'Escape') closeSheet(); return; }
+  if (e.key === ' ' || e.key === 'Enter') { if (e.target.closest && e.target.closest('button,input')) return; e.preventDefault(); stageAction(); }
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (isActive()) wake(true); logic(); render(); } });
+
+function frame() { logic(); render(); stepLeaves(); requestAnimationFrame(frame); }
+setInterval(logic, 250); // keeps phases advancing when animation frames are throttled
+
+rebuild(); renderTabs(); renderPresets(); render(); requestAnimationFrame(frame);
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) {}
+}
+})();
+</script>
+</body>
+</html>
