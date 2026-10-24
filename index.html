@@ -51,14 +51,18 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   background:radial-gradient(ellipse at 50% 55%, transparent 40%, rgba(70,0,8,.85) 100%)}
 #leaves{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
-.slash{position:absolute;left:-10%;right:-10%;top:47%;height:3px;pointer-events:none;opacity:0;transform-origin:left center;
-  transform:rotate(-9deg) scaleX(0);background:linear-gradient(90deg, transparent, #fff 12%, #fff6d8 60%, transparent);
+/* the light line follows the cut in the chosen strike picture: --rot (and --rot2 for the cross cut) */
+.slash{position:absolute;left:50%;top:47%;width:170vmax;margin-left:-85vmax;height:3px;pointer-events:none;opacity:0;transform-origin:center;
+  transform:rotate(var(--rot,-9deg)) scaleX(0);background:linear-gradient(90deg, transparent, #fff 25%, #fff6d8 70%, transparent);
   box-shadow:0 0 18px 6px rgba(255,240,200,.85), 0 0 60px 18px rgba(255,90,60,.45)}
+.slash2{transform:rotate(var(--rot2,-9deg)) scaleX(0)}
 #app.strike .flash{animation:flash .55s ease-out}
 #app.strike .slash{animation:slash .9s cubic-bezier(.15,.9,.2,1)}
+#app.strike.double .slash2{animation:slash2 .9s .14s cubic-bezier(.15,.9,.2,1) both}
 #app.strike{animation:quake .45s linear}
 @keyframes flash{0%{opacity:.95}100%{opacity:0}}
-@keyframes slash{0%{opacity:1;transform:rotate(-9deg) scaleX(0)}18%{opacity:1;transform:rotate(-9deg) scaleX(1)}100%{opacity:0;transform:rotate(-9deg) scaleX(1) scaleY(.2)}}
+@keyframes slash{0%{opacity:1;transform:rotate(var(--rot)) scaleX(0)}18%{opacity:1;transform:rotate(var(--rot)) scaleX(1)}100%{opacity:0;transform:rotate(var(--rot)) scaleX(1) scaleY(.2)}}
+@keyframes slash2{0%{opacity:1;transform:rotate(var(--rot2)) scaleX(0)}18%{opacity:1;transform:rotate(var(--rot2)) scaleX(1)}100%{opacity:0;transform:rotate(var(--rot2)) scaleX(1) scaleY(.2)}}
 @keyframes quake{0%,100%{transform:none}20%{transform:translate(-7px,4px)}40%{transform:translate(6px,-5px)}60%{transform:translate(-4px,3px)}80%{transform:translate(2px,-2px)}}
 #app.tense{animation:tremble .18s linear infinite}
 @keyframes tremble{0%,100%{transform:none}25%{transform:translate(calc(var(--tension) * 1.6px),calc(var(--tension) * -1px))}75%{transform:translate(calc(var(--tension) * -1.4px),calc(var(--tension) * 1.2px))}}
@@ -87,6 +91,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .phase .kanji{font:400 22px/1 var(--font-brush);letter-spacing:0;padding:0;color:var(--p);text-shadow:0 0 12px color-mix(in srgb,var(--p) 60%,transparent)}
 .phase .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .phase.long .tx{letter-spacing:.08em}
+.cap{font-size:12px;font-weight:700;letter-spacing:.4em;padding-left:.4em;color:var(--gold);text-shadow:0 1px 8px #000;margin-bottom:-.4em}
+.cap:empty{display:none}
 .time{font-family:var(--font-brush);font-weight:400;line-height:.86;font-size:calc(var(--U) * var(--k,.5));display:flex;align-items:flex-end;color:var(--paper);
   text-shadow:.035em .035em 0 color-mix(in srgb,var(--crimson) 85%,transparent), 0 0 .02em #000, 0 .06em .35em rgba(0,0,0,.85)}
 #app[data-phase="rest"] .time{text-shadow:.03em .03em 0 rgba(60,90,150,.7), 0 .06em .35em rgba(0,0,0,.85)}
@@ -141,6 +147,18 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .presets.off{visibility:hidden}
 .chip{flex:none;padding:8px 14px;border-radius:999px;background:rgba(8,7,10,.55);border:1px solid var(--line);font-size:12.5px;font-weight:500;letter-spacing:.06em;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .chip.on{border-color:var(--p);color:var(--gold)}
+.chip.done{opacity:.5;text-decoration:line-through;text-decoration-color:rgba(243,237,227,.5)}
+.chip.on.done{opacity:.8}
+.menu-item{display:grid;gap:8px;padding-block:10px;border-bottom:1px solid var(--line)}
+.menu-item .row{display:flex;align-items:center;gap:8px}
+.menu-item input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
+.menu-item .nums{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between}
+.menu-item .num{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mist)}
+.menu-item .stepper output{min-width:62px;font-size:15px}
+.menu-item .stepper button{width:40px;height:40px}
+.menu-item .prog{font-size:11px;color:var(--mist)}
+.row-save{display:grid;gap:8px}
+.row-save input{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
 
 /* sheet */
 .scrim{position:fixed;inset:0;background:rgba(2,2,4,.6);opacity:0;pointer-events:none;transition:opacity .3s;z-index:20}
@@ -199,6 +217,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 <div class="world" aria-hidden="true">
   <div class="scene" data-s="kamae" style="background-image:url('assets/kamae.webp')"></div>
   <div class="scene" data-s="issen" style="background-image:url('assets/issen.webp')"></div>
+  <div class="scene" data-s="issen_kesa" style="background-image:url('assets/issen_kesa.webp')"></div>
+  <div class="scene" data-s="issen_gyaku" style="background-image:url('assets/issen_gyaku.webp')"></div>
+  <div class="scene" data-s="issen_karatake" style="background-image:url('assets/issen_karatake.webp')"></div>
+  <div class="scene" data-s="issen_jumonji" style="background-image:url('assets/issen_jumonji.webp')"></div>
   <div class="scene" data-s="noto" style="background-image:url('assets/noto.webp')"></div>
   <div class="scene" data-s="kanryo" style="background-image:url('assets/kanryo.webp')"></div>
   <canvas id="leaves"></canvas>
@@ -207,7 +229,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 </div>
 
 <div id="app" data-phase="idle">
-  <div class="world-fx" aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:5"><div class="flash"></div><div class="slash"></div></div>
+  <div class="world-fx" aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:5"><div class="flash"></div><div class="slash"></div><div class="slash slash2"></div></div>
   <header class="top">
     <div class="bar">
       <div class="brand"><b>O</b>RBIT</div>
@@ -218,6 +240,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
   <main class="main" id="stage" role="button" tabindex="0" aria-label="タイマー">
     <div class="phase" id="phase"><span class="kanji" id="kanji">構</span><span class="tx" id="label"></span></div>
+    <div class="cap" id="cap"></div>
     <div class="time" id="time" aria-live="polite"></div>
     <div class="katana" id="katana" aria-hidden="true"><div class="tsuka"></div><div class="tsuba"></div><div class="blade"><i></i></div></div>
     <div class="sub" id="sub"></div>
@@ -246,8 +269,8 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const pad = n => String(n).padStart(2, '0');
 
 const MODES = [
+  { id: 'rest', name: '休憩タイマー' },
   { id: 'interval', name: 'インターバル' },
-  { id: 'rest', name: 'セット休憩' },
   { id: 'circuit', name: 'サーキット' },
   { id: 'countdown', name: 'カウント' },
   { id: 'stopwatch', name: 'ストップウォッチ' },
@@ -256,7 +279,10 @@ const modeName = id => MODES.find(m => m.id === id).name;
 
 const DEF = {
   interval: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 },
-  rest: { rest: 90, sets: 5 },
+  // rest timer: today's exercises in order; sets 0 = no limit. Only the rest between sets is timed
+  rest: { items: [
+    { name: 'ベンチプレス', sets: 4, rest: 120 }, { name: 'インクラインダンベルプレス', sets: 3, rest: 90 },
+    { name: 'ケーブルフライ', sets: 3, rest: 60 }, { name: 'ディップス', sets: 3, rest: 90 } ] },
   circuit: { prep: 10, gap: 15, rounds: 3, roundRest: 60, items: [
     { name: 'スクワット', dur: 40 }, { name: '腕立て伏せ', dur: 40 }, { name: 'ランジ', dur: 40 },
     { name: 'プランク', dur: 40 }, { name: 'バーピー', dur: 30 } ] },
@@ -273,8 +299,14 @@ const PRESETS = {
     { name: 'タバタ×3セット', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 3, setRest: 60 } },
   ],
   rest: [
-    { name: '休憩 1分', cfg: { rest: 60 } }, { name: '1分30秒', cfg: { rest: 90 } },
-    { name: '2分', cfg: { rest: 120 } }, { name: '3分', cfg: { rest: 180 } },
+    { name: '胸の日', cfg: clone(DEF.rest) },
+    { name: '背中の日', cfg: { items: [
+      { name: 'デッドリフト', sets: 3, rest: 180 }, { name: '懸垂', sets: 4, rest: 120 },
+      { name: 'ベントオーバーロー', sets: 3, rest: 120 }, { name: 'ラットプルダウン', sets: 3, rest: 90 } ] } },
+    { name: '脚の日', cfg: { items: [
+      { name: 'スクワット', sets: 5, rest: 180 }, { name: 'ルーマニアンデッドリフト', sets: 3, rest: 120 },
+      { name: 'レッグプレス', sets: 3, rest: 120 }, { name: 'カーフレイズ', sets: 3, rest: 60 } ] } },
+    { name: 'フリー（休憩90秒）', cfg: { items: [{ name: 'フリー', sets: 0, rest: 90 }] } },
   ],
   circuit: [
     { name: '全身 基本', cfg: clone(DEF.circuit) },
@@ -290,7 +322,6 @@ const PRESETS = {
 const FIELDS = {
   interval: [['prep', '準備', 0, 60, 5], ['work', '運動', 5, 600, 5], ['rest', '休憩', 0, 600, 5, '0 にすると休憩なし'],
     ['rounds', 'ラウンド数', 1, 30, 1, null, 'n'], ['sets', 'セット数', 1, 10, 1, null, 'n'], ['setRest', 'セット間の休憩', 0, 600, 15]],
-  rest: [['rest', '休憩時間', 15, 600, 15], ['sets', '目標セット数', 1, 20, 1, null, 'n']],
   circuit: [['prep', '準備', 0, 60, 5], ['gap', '種目間の休憩', 0, 120, 5], ['rounds', 'ラウンド数', 1, 10, 1, null, 'n'], ['roundRest', 'ラウンド間の休憩', 0, 600, 15]],
   countdown: [['min', '分', 0, 180, 1, null, 'n'], ['sec', '秒', 0, 55, 5, null, 'n']],
 };
@@ -310,7 +341,7 @@ const ICON = {
 
 /* ---------- storage ---------- */
 function load() {
-  const s = { mode: 'interval', cfg: clone(DEF), prefs: { sound: true, voice: false, vibrate: true }, custom: {} };
+  const s = { mode: 'rest', cfg: clone(DEF), prefs: { sound: true, voice: false, vibrate: true }, custom: {} };
   let d = null;
   try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (d && typeof d === 'object') {
@@ -318,6 +349,10 @@ function load() {
     if (d.cfg) for (const k in DEF) if (d.cfg[k]) s.cfg[k] = Object.assign(clone(DEF[k]), d.cfg[k]);
     if (d.prefs) Object.assign(s.prefs, d.prefs);
     if (d.custom && typeof d.custom === 'object') s.custom = d.custom;
+    // the old set-rest mode kept one rest time and a set count; turn it into a one-exercise menu
+    const old = d.cfg && d.cfg.rest;
+    if (old && !Array.isArray(old.items)) s.cfg.rest = { items: [{ name: 'フリー', sets: old.sets || 0, rest: old.rest || 90 }] };
+    if (s.custom.rest) s.custom.rest = s.custom.rest.filter(p => p.cfg && Array.isArray(p.cfg.items));
   }
   return s;
 }
@@ -337,7 +372,7 @@ function summary(mode, c) {
   if (mode === 'interval') return `${c.work}/${c.rest} ×${c.rounds}` + (c.sets > 1 ? ` ×${c.sets}セット` : '');
   if (mode === 'circuit') return `${c.items.length}種目 ×${c.rounds}`;
   if (mode === 'countdown') return jp(c.min * 60 + c.sec);
-  if (mode === 'rest') return `休憩${jp(c.rest)} ×${c.sets}`;
+  if (mode === 'rest') return c.items.slice(0, 2).map(it => it.name).join('・') + (c.items.length > 2 ? ` ほか${c.items.length - 2}種目` : '');
   return '';
 }
 
@@ -490,28 +525,63 @@ function viewSeg() {
   };
 }
 
-/* ---------- set rest (gym: tap after each set = the cut) ---------- */
-const R = { phase: 'idle', sets: 0, setStart: 0, restStart: 0, restDur: 0, beep: '' };
+/* ---------- rest timer (gym: only the rest is timed; tap when a set ends = the cut) ----------
+   phase 'ready': training, nothing counts; the screen shows the rest that the next tap starts.
+   phase 'rest': counting down. When it ends, the timer is set to the next rest (next set, or the next exercise). */
+const R = { phase: 'ready', item: 0, done: [], restStart: 0, restDur: 0, beep: '', started: false };
+const items = () => cfg().items;
+function syncDone() {
+  const n = items().length;
+  while (R.done.length < n) R.done.push(0);
+  R.done.length = n;
+  R.item = clamp(R.item, 0, n - 1);
+}
+const itemDone = i => { const it = items()[i]; return it.sets > 0 && R.done[i] >= it.sets; };
+const allDone = () => items().every((_, i) => itemDone(i));
+function nextOpenItem(from) {
+  const n = items().length;
+  for (let k = 1; k <= n; k++) { const i = (from + k) % n; if (!itemDone(i)) return i; }
+  return -1;
+}
+function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.started = false; syncDone(); wake(false); }
 function completeSet() {
-  audio();
-  const c = cfg();
-  R.sets++;
-  strike(R.sets >= c.sets);
-  if (R.sets >= c.sets) {
-    R.phase = 'done'; setTimeout(() => { play('gong'); say('全セット完了。お見事'); }, 900); buzz([200, 100, 200, 100, 500]); wake(false);
-  } else {
-    R.phase = 'rest'; R.restStart = Date.now(); R.restDur = c.rest; R.beep = '';
-    setTimeout(() => play('sheathe'), 700); buzz(200); wake(true);
+  audio(); syncDone();
+  R.done[R.item]++; R.started = true;
+  const finished = allDone();
+  strike(finished);
+  if (finished) {
+    R.phase = 'done'; setTimeout(() => { play('gong'); say('全種目完了。お見事'); }, 900); buzz([200, 100, 200, 100, 500]); wake(false);
+    return;
   }
+  R.phase = 'rest'; R.restStart = Date.now(); R.restDur = items()[R.item].rest; R.beep = '';
+  setTimeout(() => play('sheathe'), 700); buzz(200); wake(true);
 }
 function endRest() {
-  R.phase = 'set'; R.setStart = Date.now();
-  play('draw'); buzz([60, 40, 60]); say(R.sets + 1 === cfg().sets ? 'ラストセット' : `${R.sets + 1}セット目`);
+  syncDone();
+  const was = R.item;
+  if (itemDone(R.item)) { const n = nextOpenItem(R.item); if (n >= 0) R.item = n; }
+  R.phase = 'ready';
+  const it = items()[R.item], set = R.done[R.item] + 1;
+  play('draw'); buzz([60, 40, 60]);
+  say(R.item !== was ? `次は${it.name}` : it.sets > 0 && set === it.sets ? 'ラストセット' : `${set}セット目`);
 }
+// while training this changes the exercise's rest time and keeps it; while resting it changes only this rest
 function adjRest(d) {
-  R.restDur = Math.max(5, R.restDur + d);
-  if (R.restDur - (Date.now() - R.restStart) / 1000 <= 0) endRest();
-  toast(`休憩を${Math.abs(d)}秒${d > 0 ? 'のばしました' : '短くしました'}`);
+  if (R.phase === 'rest') {
+    R.restDur = Math.max(5, R.restDur + d);
+    if (R.restDur - (Date.now() - R.restStart) / 1000 <= 0) endRest();
+    toast(`この休憩を${Math.abs(d)}秒${d > 0 ? 'のばしました' : '短くしました'}`);
+    return;
+  }
+  const it = items()[R.item];
+  it.rest = clamp(it.rest + d, 15, 900); save();
+  toast(`${it.name}の休憩を${jp(it.rest)}にしました`);
+}
+function jumpItem(i) {
+  syncDone();
+  if (i < 0 || i >= items().length || R.phase === 'done') return;
+  R.item = i;
+  if (R.phase === 'ready') toast(`${items()[i].name}にしました`);
 }
 function restTick() {
   if (R.phase !== 'rest') return;
@@ -520,16 +590,25 @@ function restTick() {
   const c = Math.ceil(rem);
   if (c <= 3 && R.beep !== c) { R.beep = c; play('drum'); buzz(40); beat(); }
 }
+function setLabel(i) { const it = items()[i], n = Math.min(R.done[i] + 1, it.sets || Infinity); return it.sets > 0 ? `セット ${n} / ${it.sets}` : `${n}セット目`; }
 function viewRest() {
-  const c = cfg(), rounds = { n: c.sets, lit: R.sets, cur: R.sets };
-  if (R.phase === 'idle') return { phase: 'idle', label: 'セット休憩', time: clock(c.rest), sub: `目標 ${c.sets}セット`, next: 'セットが終わったらタップで斬る', fill: 0, rounds: { n: c.sets, lit: 0, cur: 0 } };
-  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(c.sets), sub: 'セット完了', next: 'お見事', fill: 1, rounds: { n: c.sets, lit: c.sets, cur: -1 } };
-  if (R.phase === 'set') {
-    const el = (Date.now() - R.setStart) / 1000;
-    return { phase: 'work', label: `セット ${R.sets + 1} / ${c.sets}`, time: clock(el), sub: R.sets + 1 === c.sets ? 'ラストセット' : 'セット中', next: '終わったらタップで斬る', fill: (el % 60) / 60, charge: Math.min(1, el / 60), rounds };
+  syncDone();
+  const it = items()[R.item], done = R.done[R.item];
+  const rounds = it.sets > 0 ? { n: it.sets, lit: done, cur: done } : { n: Math.min(12, done + 1), lit: done, cur: done };
+  const total = R.done.reduce((a, b) => a + b, 0);
+  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(total), sub: `${items().length}種目　${total}セット`, next: 'お見事', fill: 1, rounds: { n: rounds.n, lit: rounds.n, cur: -1 } };
+  if (R.phase === 'rest') {
+    const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
+    const nextI = itemDone(R.item) ? nextOpenItem(R.item) : R.item;
+    const nextTx = nextI >= 0 ? `次は ${nextI === R.item ? '' : items()[nextI].name + '　'}${setLabel(nextI)}` : '';
+    return { phase: 'rest', label: '休憩', time: remain(rem), sub: nextTx, next: `${it.name}　${done}${it.sets > 0 ? ' / ' + it.sets : ''}セット完了`, fill: rem / R.restDur, rounds };
   }
-  const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
-  return { phase: 'rest', label: '休憩', time: remain(rem), sub: `次は ${R.sets + 1}セット目`, next: `${R.sets} / ${c.sets} セット完了`, fill: rem / R.restDur, rounds };
+  const lastOfItem = it.sets > 0 && done + 1 >= it.sets;
+  const after = lastOfItem ? nextOpenItem(R.item) : R.item;
+  const isLast = lastOfItem && after < 0;
+  return { phase: 'work', label: it.name, long: true, cap: isLast ? '最後のセット' : '次の休憩', time: isLast ? '—' : clock(it.rest), sub: setLabel(R.item),
+    next: isLast ? '終わったらタップで完了' : lastOfItem && after !== R.item ? `この後の休憩 ${jp(it.rest)} → 次は ${items()[after].name}` : `セットが終わったらタップ　休憩 ${jp(it.rest)}`,
+    fill: 0, rounds };
 }
 
 /* ---------- stopwatch ---------- */
@@ -549,17 +628,17 @@ function viewSW() {
 /* ---------- mode-level dispatch ---------- */
 function isActive() {
   const m = store.mode;
-  if (m === 'rest') return R.phase === 'set' || R.phase === 'rest';
+  if (m === 'rest') return R.started && R.phase !== 'done';
   if (m === 'stopwatch') return W.status === 'running';
   return T.status === 'running';
 }
 function busy() {
   const m = store.mode;
-  if (m === 'rest') return R.phase === 'set' || R.phase === 'rest';
+  if (m === 'rest') return R.started && R.phase !== 'done';
   if (m === 'stopwatch') return W.status !== 'idle';
   return T.status === 'running' || T.status === 'paused';
 }
-function resetAll() { rebuild(); R.phase = 'idle'; R.sets = 0; swReset(); wake(false); }
+function resetAll() { rebuild(); resetRest(); swReset(); wake(false); }
 function view() { return store.mode === 'rest' ? viewRest() : store.mode === 'stopwatch' ? viewSW() : viewSeg(); }
 function logic() { if (store.mode === 'rest') restTick(); else if (store.mode !== 'stopwatch') segTick(); }
 
@@ -567,10 +646,9 @@ function controls() {
   const m = store.mode, A = f => () => { f(); render(); };
   const gear = { ic: 'gear', t: '設定', fn: openSheet };
   if (m === 'rest') {
-    if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(endRest) }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
-    if (R.phase === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(resetAll) }, c: { ic: 'reset', t: 'もう一度', fn: A(resetAll), noStage: true }, r: gear };
-    const last = R.sets + 1 >= cfg().sets;
-    return { l: { ic: 'reset', t: 'リセット', fn: A(resetAll), dis: R.phase === 'idle' }, c: { ic: 'cut', t: last ? '最後のセット完了' : 'セット完了', fn: A(completeSet) }, r: gear };
+    if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(endRest), noStage: true }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
+    if (R.phase === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(resetRest) }, c: { ic: 'reset', t: 'もう一度', fn: A(resetRest), noStage: true }, r: gear };
+    return { l: { tx: '−15', t: '休憩 −15秒', fn: A(() => adjRest(-15)) }, c: { ic: 'cut', t: 'セット完了', fn: A(completeSet) }, r: { tx: '+15', t: '休憩 +15秒', fn: A(() => adjRest(15)) } };
   }
   if (m === 'stopwatch') {
     if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
@@ -583,11 +661,30 @@ function controls() {
 }
 
 /* ---------- the strike ---------- */
+// one of these pictures is chosen at random for each cut; rot = angle of the light line drawn over it
+const STRIKES = [
+  { s: 'issen', rot: -9 }, { s: 'issen_kesa', rot: -56 }, { s: 'issen_gyaku', rot: -40 },
+  { s: 'issen_karatake', rot: 90 }, { s: 'issen_jumonji', rot: 26, rot2: -26 },
+];
+const loadedStrikes = new Set();
+STRIKES.forEach(v => { const im = new Image(); im.onload = () => loadedStrikes.add(v.s); im.src = `assets/${v.s}.webp`; });
+let lastStrike = '';
+function pickStrike() {
+  const pool = STRIKES.filter(v => loadedStrikes.has(v.s) && v.s !== lastStrike);
+  const v = pool.length ? pool[Math.floor(Math.random() * pool.length)] : STRIKES[0];
+  lastStrike = v.s;
+  return v;
+}
 let striking = 0, burst = 0;
 function strike(final) {
+  const v = pickStrike();
   play('slash'); buzz([30, 30, 260]);
+  app.style.setProperty('--rot', v.rot + 'deg');
+  app.style.setProperty('--rot2', (v.rot2 ?? v.rot) + 'deg');
+  app.classList.toggle('double', v.rot2 != null);
   app.classList.remove('strike'); void app.offsetWidth; app.classList.add('strike');
-  showScene('issen', true);
+  if (v.rot2 != null) setTimeout(() => play('slash'), 140);
+  showScene(v.s, true);
   burst = 1;
   clearTimeout(striking);
   striking = setTimeout(() => { app.classList.remove('strike'); striking = 0; last.scene = ''; render(); }, final ? 1700 : 1250);
@@ -595,7 +692,7 @@ function strike(final) {
 
 /* ---------- rendering ---------- */
 const app = $('#app'), stage = $('#stage'), timeEl = $('#time'), labelEl = $('#label'), kanjiEl = $('#kanji'), phaseEl = $('#phase');
-const subEl = $('#sub'), nextEl = $('#next'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
+const subEl = $('#sub'), nextEl = $('#next'), capEl = $('#cap'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
 const root = document.documentElement, scenes = [...document.querySelectorAll('.scene')];
 const KANJI = { idle: '構', prep: '支', work: '斬', rest: '納', done: '極' };
 const SCENE = { idle: 'kamae', prep: 'kamae', work: 'kamae', rest: 'noto', done: 'kanryo' };
@@ -620,6 +717,7 @@ function render() {
   setText(kanjiEl, 'kanji', KANJI[v.phase] || '構');
   setText(labelEl, 'label', v.label);
   phaseEl.classList.toggle('long', !!v.long);
+  setText(capEl, 'cap', v.cap || '');
   setText(subEl, 'sub', v.sub || '');
   setText(nextEl, 'next', v.next || '');
   const tk = v.time + '|' + v.tenth;
@@ -647,7 +745,12 @@ function render() {
       return `<button class="ctl${k === 'c' ? ' main' : ''}" data-k="${k}" ${b.dis ? 'disabled' : ''}><span class="b">${b.tx ? `<span class="tx">${b.tx}</span>` : ICON[b.ic]}</span><span>${b.t}</span></button>`;
     }).join('');
   }
-  presetsEl.classList.toggle('off', busy() || PRESETS[store.mode].length + (store.custom[store.mode] || []).length === 0);
+  if (store.mode === 'rest') {
+    // today's exercises with progress; refresh only when something on them changed
+    const sig = items().map((it, i) => `${it.name}${it.sets}:${R.done[i]}`).join('|') + `#${R.item}${R.phase}`;
+    if (last.chips !== sig) { last.chips = sig; renderPresets(); }
+    presetsEl.classList.remove('off');
+  } else presetsEl.classList.toggle('off', busy() || PRESETS[store.mode].length + (store.custom[store.mode] || []).length === 0);
   if (store.mode === 'stopwatch') {
     lapsEl.hidden = W.laps.length === 0;
     if (last.laps !== W.laps.length) {
@@ -741,10 +844,20 @@ function switchMode(id) {
 }
 function presetOn(p) { const c = cfg(); return Object.keys(p.cfg).every(k => JSON.stringify(c[k]) === JSON.stringify(p.cfg[k])); }
 function allPresets() { return PRESETS[store.mode].concat(store.custom[store.mode] || []); }
-function renderPresets() { presetsEl.innerHTML = allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join(''); }
+function renderPresets() {
+  if (store.mode === 'rest') {
+    syncDone();
+    presetsEl.innerHTML = items().map((it, i) =>
+      `<button class="chip${i === R.item ? ' on' : ''}${itemDone(i) ? ' done' : ''}" data-i="${i}">${esc(it.name)}　${R.done[i]}${it.sets > 0 ? '/' + it.sets : ''}</button>`).join('') +
+      '<button class="chip" data-act="edit">＋ メニューを編集</button>';
+    return;
+  }
+  last.chips = '';
+  presetsEl.innerHTML = allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('');
+}
 function applyPreset(i) {
   const p = allPresets()[i]; if (!p) return;
-  Object.assign(cfg(), clone(p.cfg)); save(); rebuild(); R.phase = 'idle'; R.sets = 0;
+  Object.assign(cfg(), clone(p.cfg)); save(); rebuild(); if (store.mode === 'rest') resetRest();
   renderPresets(); render(); if (sheetOpen) buildSheet();
   toast(`${p.name} にしました`);
 }
@@ -762,7 +875,8 @@ function stepper(id, val, attrs) {
 function buildSheet() {
   const m = store.mode, c = cfg(), b = busy();
   let h = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${modeName(m)}の設定</h2><button class="done-btn" data-act="close">完了</button></div>`;
-  if (m !== 'stopwatch') {
+  if (m === 'rest') h += restSheet();
+  else if (m !== 'stopwatch') {
     if (b) h += `<p class="note">タイマーが動いている間は時間を変えられません。リセットすると変えられます。</p>`;
     else {
       h += `<div class="sec"><h3>プリセット</h3><div class="chips">${allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('')}</div></div>`;
@@ -787,6 +901,31 @@ function buildSheet() {
     `</div><button class="wide" data-act="test">斬撃の音と演出を試す</button></div></div>`;
   sheet.innerHTML = h;
 }
+// the rest timer's menu can be edited mid-workout; progress per exercise is kept
+function restSheet() {
+  syncDone();
+  const c = cfg(), mine = store.custom.rest || [];
+  let h = `<div class="sec"><h3>メニュー</h3><div class="chips">${allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('')}</div>` +
+    `<p class="note">選ぶと今日の種目が入れ替わり、進み具合は最初に戻ります。</p></div>`;
+  h += `<div class="sec"><h3>今日の種目（上から順に）</h3><div>` + c.items.map((it, i) =>
+    `<div class="menu-item"><div class="row"><input id="ritem-${i}" data-rname="${i}" value="${esc(it.name)}" maxlength="24" aria-label="種目${i + 1}の名前">` +
+    `<button class="x" data-rdel="${i}" aria-label="${esc(it.name)}を消す" ${c.items.length <= 1 ? 'disabled' : ''}>${ICON.x}</button></div>` +
+    `<div class="nums"><span class="num">セット数${stepper('rs-' + i, it.sets || '∞', `data-ik="sets" data-ii="${i}"`)}</span>` +
+    `<span class="num">休憩${stepper('rr-' + i, jp(it.rest), `data-ik="rest" data-ii="${i}"`)}</span></div>` +
+    `<span class="prog">${R.done[i]}セット済み</span></div>`).join('') +
+    `</div>${c.items.length < 15 ? '<button class="wide" data-act="radd">＋ 種目を追加</button>' : ''}<p class="note">セット数を 0（∞）にすると、回数を決めずに続けられます。</p></div>`;
+  h += `<div class="sec"><h3>マイメニュー</h3>` +
+    (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS.rest.length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '<p class="note">今日の種目を保存すると、次から1タップで呼び出せます。</p>') +
+    (mine.length < 8 ? `<div class="row-save"><input id="menu-name" placeholder="メニューの名前（例：胸の日）" maxlength="16" aria-label="保存するメニューの名前"><button class="wide" data-act="rsave">今の種目を保存</button></div>` : '') + `</div>`;
+  h += `<div class="sec"><button class="wide" data-act="rreset">進み具合を最初に戻す</button></div>`;
+  return h;
+}
+function changeRestItem(i, k, d) {
+  const it = items()[i];
+  if (k === 'sets') { it.sets = clamp(it.sets + d, 0, 20); const o = $('#rs-' + i); if (o) o.textContent = it.sets || '∞'; }
+  else { it.rest = clamp(it.rest + d * 15, 15, 900); const o = $('#rr-' + i); if (o) o.textContent = jp(it.rest); }
+  save(); refreshChips(); render();
+}
 function changeField(k, d) {
   const f = FIELDS[store.mode].find(x => x[0] === k), c = cfg();
   c[k] = clamp(c[k] + d * f[4], f[2], f[3]);
@@ -809,7 +948,7 @@ function stopHold() { clearTimeout(holdT); clearInterval(holdI); }
 sheet.addEventListener('pointerdown', e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   e.preventDefault();
-  const d = +b.dataset.d, run = () => b.dataset.f ? changeField(b.dataset.f, d) : changeItem(+b.dataset.it, d);
+  const d = +b.dataset.d, run = () => b.dataset.f ? changeField(b.dataset.f, d) : b.dataset.ik ? changeRestItem(+b.dataset.ii, b.dataset.ik, d) : changeItem(+b.dataset.it, d);
   run(); stopHold(); holdT = setTimeout(() => { holdI = setInterval(run, 70); }, 380);
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => sheet.addEventListener(t, stopHold));
@@ -820,19 +959,35 @@ sheet.addEventListener('click', e => {
   if (t.dataset.pref) { store.prefs[t.dataset.pref] = !store.prefs[t.dataset.pref]; t.setAttribute('aria-checked', store.prefs[t.dataset.pref]); save(); audio(); return; }
   if (t.dataset.del != null) { c.items.splice(+t.dataset.del, 1); save(); rebuild(); buildSheet(); renderPresets(); render(); return; }
   if (t.dataset.mydel != null) { store.custom[m].splice(+t.dataset.mydel, 1); save(); buildSheet(); renderPresets(); render(); return; }
+  if (t.dataset.rdel != null) { const i = +t.dataset.rdel; c.items.splice(i, 1); R.done.splice(i, 1); if (R.item > i) R.item--; syncDone(); save(); buildSheet(); renderPresets(); render(); return; }
   const act = t.dataset.act;
+  if (act === 'radd') { c.items.push({ name: `種目${c.items.length + 1}`, sets: 3, rest: 90 }); syncDone(); save(); buildSheet(); renderPresets(); render(); const inp = $('#ritem-' + (c.items.length - 1)); if (inp) { inp.focus(); inp.select(); } return; }
+  if (act === 'rsave') {
+    const name = ($('#menu-name').value || '').trim() || summary('rest', c);
+    (store.custom.rest = store.custom.rest || []).push({ name, cfg: clone(c) }); save(); buildSheet(); toast(`「${name}」を保存しました`); return;
+  }
+  if (act === 'rreset') { resetRest(); buildSheet(); renderPresets(); render(); toast('進み具合を最初に戻しました'); return; }
   if (act === 'close') closeSheet();
   else if (act === 'add') { c.items.push({ name: `種目${c.items.length + 1}`, dur: 30 }); save(); rebuild(); buildSheet(); render(); const inp = $('#item-' + (c.items.length - 1)); if (inp) inp.focus(); }
   else if (act === 'savepreset') { (store.custom[m] = store.custom[m] || []).push({ name: summary(m, c), cfg: clone(c) }); save(); buildSheet(); renderPresets(); render(); toast('マイプリセットに保存しました'); }
   else if (act === 'test') { audio(); const was = store.prefs.sound; store.prefs.sound = true; closeSheet(); setTimeout(() => { strike(); store.prefs.sound = was; }, 350); }
 });
-sheet.addEventListener('input', e => { const i = e.target.dataset.name; if (i == null) return; cfg().items[+i].name = e.target.value.trim(); save(); rebuild(); render(); });
+sheet.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.name != null) { cfg().items[+t.dataset.name].name = t.value.trim(); save(); rebuild(); render(); }
+  else if (t.dataset.rname != null) { items()[+t.dataset.rname].name = t.value.trim() || `種目${+t.dataset.rname + 1}`; save(); render(); }
+});
 scrim.addEventListener('click', closeSheet);
 
 /* ---------- events ---------- */
 $('#gear').addEventListener('click', openSheet);
 $('#tabs').addEventListener('click', e => { const t = e.target.closest('[data-m]'); if (t) switchMode(t.dataset.m); });
-presetsEl.addEventListener('click', e => { const t = e.target.closest('[data-p]'); if (t) applyPreset(+t.dataset.p); });
+presetsEl.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.i != null) { jumpItem(+t.dataset.i); render(); }
+  else if (t.dataset.act === 'edit') openSheet();
+  else if (t.dataset.p != null) applyPreset(+t.dataset.p);
+});
 ctlEl.addEventListener('click', e => { const t = e.target.closest('[data-k]'); if (t && !t.disabled) { const b = ctlFns[t.dataset.k]; if (b && b.fn) b.fn(); } });
 function stageAction() { const c = ctlFns.c || controls().c; if (c.fn && !c.noStage && !c.dis) c.fn(); }
 stage.addEventListener('click', stageAction);

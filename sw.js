@@ -1,7 +1,8 @@
 // Offline cache: app files are cache-first, Google Fonts are cached as they load.
-const CACHE = 'orbit-iai-v1';
+const CACHE = 'orbit-iai-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
-  'assets/kamae.webp', 'assets/issen.webp', 'assets/noto.webp', 'assets/kanryo.webp'];
+  'assets/kamae.webp', 'assets/issen.webp', 'assets/noto.webp', 'assets/kanryo.webp',
+  'assets/issen_kesa.webp', 'assets/issen_gyaku.webp', 'assets/issen_karatake.webp', 'assets/issen_jumonji.webp'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
