@@ -43,8 +43,21 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .scene{position:absolute;inset:-4%;background-size:cover;background-position:center 62%;opacity:0;transition:opacity 1.1s ease, transform 1.2s ease, filter 1.2s ease;transform:scale(1)}
 .scene.on{opacity:1}
 .scene.fast{transition:opacity .08s linear}
-#app[data-phase="work"] .scene[data-s="kamae"].on{transform:scale(calc(1 + var(--charge,0) * .07))}
-#app[data-phase="prep"] .scene.on,#app[data-phase="idle"] .scene.on{filter:brightness(.78) saturate(.85)}
+#scenes{position:absolute;inset:0}
+:root[data-phase="work"] .scene.charge.on{transform:scale(calc(1 + var(--charge,0) * .07))}
+:root[data-phase="prep"] .scene.on,:root[data-phase="idle"] .scene.on{filter:brightness(.78) saturate(.85)}
+/* each world recolours the same tokens: --crimson = work accent, --moon = rest accent, --gold = calm accent */
+:root[data-world="kyudo"]{--crimson:#e2577f;--ember:#ff8fb0;--gold:#f4d48f;--moon:#9fb6e0}
+:root[data-world="nami"]{--crimson:#2f86e8;--ember:#7fd0ff;--gold:#eef3f8;--moon:#8fc7d8}
+:root[data-world="nova"]{--crimson:#ff3d9a;--ember:#ffb347;--gold:#ffc46b;--moon:#9a8cff}
+:root[data-world="ki"]{--crimson:#ff9d00;--ember:#ffd34d;--gold:#ffe08a;--moon:#7fb2ff}
+.katana.plain .tsuka,.katana.plain .tsuba{display:none}
+.katana.plain .blade{clip-path:none;border-radius:3px;height:6px;background:rgba(243,237,227,.18)}
+.gem{position:relative;width:var(--w,10px);height:var(--w,10px);transform:rotate(45deg);border:1.5px solid rgba(243,237,227,.55);background:rgba(8,7,10,.55);box-shadow:0 2px 4px rgba(0,0,0,.6);transition:background .4s,box-shadow .4s}
+.gem.cut{background:var(--crimson);border-color:transparent;box-shadow:0 0 10px var(--crimson)}
+.gem.cur{border-color:var(--gold);animation:gemglint 1.4s ease-in-out infinite}
+@keyframes gemglint{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 14px var(--gold)}}
+.grove.gems{align-items:center}
 .shade{position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg, rgba(6,5,8,.78) 0%, rgba(6,5,8,.5) 30%, rgba(6,5,8,0) 52%, rgba(6,5,8,0) 70%, rgba(6,5,8,.86) 100%)}
 .vignette{position:absolute;inset:0;pointer-events:none;opacity:calc(.35 + var(--tension,0) * .6);transition:opacity .4s;
@@ -149,6 +162,18 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .chip.on{border-color:var(--p);color:var(--gold)}
 .chip.done{opacity:.5;text-decoration:line-through;text-decoration-color:rgba(243,237,227,.5)}
 .chip.on.done{opacity:.8}
+.chip.menu{border-color:var(--gold);color:var(--gold);font-weight:700}
+.menus{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.menu-btn{display:grid;gap:4px;text-align:left;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--ink);color:var(--paper)}
+.menu-btn b{font-size:17px}
+.menu-btn span{font-size:11.5px;color:var(--mist);line-height:1.5}
+.menu-btn.on{border-color:var(--gold)}
+.menu-btn em{font-style:normal;font-size:11px;color:var(--gold)}
+.worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.world-btn{position:relative;height:120px;border-radius:12px;border:1px solid var(--line);background:#000 center/cover no-repeat;color:var(--paper);overflow:hidden;display:flex;align-items:flex-end;padding:8px;font-weight:700;font-size:14px;text-shadow:0 1px 6px #000}
+.world-btn::before{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.75))}
+.world-btn span{position:relative}
+.world-btn.on{border:2px solid var(--gold)}
 .menu-item{display:grid;gap:8px;padding-block:10px;border-bottom:1px solid var(--line)}
 .menu-item .row{display:flex;align-items:center;gap:8px}
 .menu-item input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
@@ -209,20 +234,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 @media (prefers-reduced-motion:reduce){
   #app.tense,#app.strike,.time.beat,.bamboo.cur::after{animation:none!important}
   .scene{transition:opacity .4s}
-  #app[data-phase="work"] .scene[data-s="kamae"].on{transform:none}
+  :root[data-phase="work"] .scene.charge.on{transform:none}
+  .gem.cur{animation:none}
 }
 </style>
 </head>
 <body>
 <div class="world" aria-hidden="true">
-  <div class="scene" data-s="kamae" style="background-image:url('assets/kamae.webp')"></div>
-  <div class="scene" data-s="issen" style="background-image:url('assets/issen.webp')"></div>
-  <div class="scene" data-s="issen_kesa" style="background-image:url('assets/issen_kesa.webp')"></div>
-  <div class="scene" data-s="issen_gyaku" style="background-image:url('assets/issen_gyaku.webp')"></div>
-  <div class="scene" data-s="issen_karatake" style="background-image:url('assets/issen_karatake.webp')"></div>
-  <div class="scene" data-s="issen_jumonji" style="background-image:url('assets/issen_jumonji.webp')"></div>
-  <div class="scene" data-s="noto" style="background-image:url('assets/noto.webp')"></div>
-  <div class="scene" data-s="kanryo" style="background-image:url('assets/kanryo.webp')"></div>
+  <div id="scenes"></div>
   <canvas id="leaves"></canvas>
   <div class="shade"></div>
   <div class="vignette"></div>
@@ -279,10 +298,9 @@ const modeName = id => MODES.find(m => m.id === id).name;
 
 const DEF = {
   interval: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 },
-  // rest timer: today's exercises in order; sets 0 = no limit. Only the rest between sets is timed
-  rest: { items: [
-    { name: 'ベンチプレス', sets: 4, rest: 120 }, { name: 'インクラインダンベルプレス', sets: 3, rest: 90 },
-    { name: 'ケーブルフライ', sets: 3, rest: 60 }, { name: 'ディップス', sets: 3, rest: 90 } ] },
+  // rest timer: today's exercises in order; sets 0 = no limit; work = seconds of a timed exercise (0 = none).
+  // Only the rest between sets is timed. Filled from the Push A menu below
+  rest: null,
   circuit: { prep: 10, gap: 15, rounds: 3, roundRest: 60, items: [
     { name: 'スクワット', dur: 40 }, { name: '腕立て伏せ', dur: 40 }, { name: 'ランジ', dur: 40 },
     { name: 'プランク', dur: 40 }, { name: 'バーピー', dur: 30 } ] },
@@ -290,6 +308,23 @@ const DEF = {
   stopwatch: {},
 };
 
+// the PPL week from the training plan (Obsidian 07_健康/10_筋トレ/01_プラン.md): sets from "現在の重量", rest from "インターバル"
+const ex = (name, sets, rest, work = 0) => ({ name, sets, rest, work });
+const DAY_MENUS = [
+  { name: 'Push A', cfg: { menu: 'Push A', items: [ex('ダンベルベンチプレス', 4, 90), ex('インクラインダンベルプレス', 3, 75), ex('ダンベルフライ', 2, 60),
+    ex('サイドレイズ', 3, 60), ex('クローズグリップ・ダンベルプレス', 3, 60)] } },
+  { name: 'Pull A', cfg: { menu: 'Pull A', items: [ex('ワンハンドロー', 4, 90), ex('インクライン・ダンベルロー（肘を開く）', 3, 60), ex('ダンベルRDL', 3, 90),
+    ex('リアレイズ', 3, 60), ex('インクラインダンベルカール', 3, 60)] } },
+  { name: 'Legs A', cfg: { menu: 'Legs A', items: [ex('ゴブレットスクワット', 4, 90), ex('ダンベルRDL', 3, 75), ex('ブルガリアンスプリット', 3, 120),
+    ex('カーフレイズ', 3, 45)] } },
+  { name: 'Push B', cfg: { menu: 'Push B', items: [ex('ダンベルショルダープレス', 4, 90), ex('サイドレイズ', 4, 60), ex('サイドライイング・ラテラルレイズ', 3, 45),
+    ex('インクラインダンベルフライ', 3, 60), ex('ナロープッシュアップ', 3, 60)] } },
+  { name: 'Pull B', cfg: { menu: 'Pull B', items: [ex('ワンハンドロー（重め）', 4, 120), ex('インクライン・ダンベルロー（肘を体に沿わせる）', 3, 75),
+    ex('ダンベルプルオーバー', 3, 75), ex('リアレイズ', 3, 60), ex('ハンマーカール', 3, 60)] } },
+  { name: 'Legs B', cfg: { menu: 'Legs B', items: [ex('ゴブレットスクワット（軽め）', 3, 75), ex('ブルガリアンスプリット（軽め）', 3, 60), ex('ダンベル・ヒップスラスト', 3, 75),
+    ex('カーフレイズ', 3, 45), ex('プランク', 3, 60, 30), ex('レッグレイズ', 3, 45)] } },
+];
+DEF.rest = clone(DAY_MENUS[0].cfg);
 const PRESETS = {
   interval: [
     { name: 'タバタ 20/10×8', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 } },
@@ -298,16 +333,7 @@ const PRESETS = {
     { name: 'EMOM 10分', cfg: { prep: 10, work: 60, rest: 0, rounds: 10, sets: 1, setRest: 60 } },
     { name: 'タバタ×3セット', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 3, setRest: 60 } },
   ],
-  rest: [
-    { name: '胸の日', cfg: clone(DEF.rest) },
-    { name: '背中の日', cfg: { items: [
-      { name: 'デッドリフト', sets: 3, rest: 180 }, { name: '懸垂', sets: 4, rest: 120 },
-      { name: 'ベントオーバーロー', sets: 3, rest: 120 }, { name: 'ラットプルダウン', sets: 3, rest: 90 } ] } },
-    { name: '脚の日', cfg: { items: [
-      { name: 'スクワット', sets: 5, rest: 180 }, { name: 'ルーマニアンデッドリフト', sets: 3, rest: 120 },
-      { name: 'レッグプレス', sets: 3, rest: 120 }, { name: 'カーフレイズ', sets: 3, rest: 60 } ] } },
-    { name: 'フリー（休憩90秒）', cfg: { items: [{ name: 'フリー', sets: 0, rest: 90 }] } },
-  ],
+  rest: [...DAY_MENUS, { name: 'フリー（休憩90秒）', cfg: { menu: 'フリー', items: [ex('フリー', 0, 90)] } }],
   circuit: [
     { name: '全身 基本', cfg: clone(DEF.circuit) },
     { name: '体幹', cfg: { prep: 10, gap: 10, rounds: 2, roundRest: 45, items: [
@@ -351,13 +377,23 @@ function load() {
     if (d.custom && typeof d.custom === 'object') s.custom = d.custom;
     // the old set-rest mode kept one rest time and a set count; turn it into a one-exercise menu
     const old = d.cfg && d.cfg.rest;
-    if (old && !Array.isArray(old.items)) s.cfg.rest = { items: [{ name: 'フリー', sets: old.sets || 0, rest: old.rest || 90 }] };
+    if (old && !Array.isArray(old.items)) s.cfg.rest = { menu: 'フリー', items: [{ name: 'フリー', sets: old.sets || 0, rest: old.rest || 90, work: 0 }] };
+    // menus made before the PPL presets existed are replaced by Push A once
+    if (old && Array.isArray(old.items) && !('menu' in old)) s.cfg.rest = clone(DEF.rest);
+    s.cfg.rest.items.forEach(it => { if (it.work == null) it.work = 0; });
     if (s.custom.rest) s.custom.rest = s.custom.rest.filter(p => p.cfg && Array.isArray(p.cfg.items));
+    if (d.run) s.run = d.run;
+    if (d.lastMenu) s.lastMenu = d.lastMenu;
   }
   return s;
 }
 const store = load();
-function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+function save() {
+  // each day menu keeps its own edits (rest times changed with −15/+15 etc.) for the next time it comes round
+  const r = store.cfg.rest;
+  if (r && r.menu) (store.menus = store.menus || {})[r.menu] = r.items;
+  try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {}
+}
 const cfg = () => store.cfg[store.mode];
 
 /* ---------- format ---------- */
@@ -412,8 +448,23 @@ const CUES = {
   bell: () => { [392, 588, 784].forEach((f, i) => osc('sine', f, 0, i * 0.02, 2.6, 0.18 / (i + 1))); },
   gong: () => { [98, 147, 196, 294].forEach((f, i) => osc('sine', f, f * 0.98, 0, 4 - i * 0.6, 0.35 / (i + 1))); noise(0, 0.2, 0.2, 400, 120, 0.6); },
   lap: () => osc('sine', 1760, 0, 0, 0.12, 0.08),
+  // kyudo: the string creaks as it is drawn; release whistles and hits the target
+  string: () => { osc('triangle', 110, 80, 0, 0.6, 0.15); noise(0, 0.5, 0.05, 600, 300, 2); },
+  arrow: () => { noise(0, 0.25, 0.5, 5000, 900, 1.5); osc('sine', 160, 55, 0.22, 0.25, 0.7); noise(0.22, 0.06, 0.4, 1500, 400, 0.8); },
+  // great wave: a swell, the crash, calm water
+  surge: () => noise(0, 1.2, 0.25, 200, 900, 0.7),
+  crash: () => { noise(0, 1.8, 0.7, 1200, 150, 0.5); osc('sine', 70, 30, 0, 1.2, 0.8); noise(0.1, 1.2, 0.3, 4000, 1500, 0.6); },
+  waves: () => noise(0, 2.2, 0.12, 500, 250, 0.6),
+  // supernova and ki strike share the rising hum; then a deep boom or a punch
+  hum: () => { osc('sawtooth', 55, 82, 0, 0.9, 0.06); osc('sine', 110, 165, 0, 0.9, 0.1); },
+  boom: () => { osc('sine', 55, 22, 0, 2.2, 0.95); noise(0, 1.5, 0.5, 300, 60, 0.5); [1318, 1760, 2637].forEach((f, i) => osc('sine', f, f * 1.02, 0.2 + i * 0.05, 1.6, 0.05)); },
+  shimmer: () => [1046, 1318, 1568].forEach((f, i) => osc('sine', f, 0, i * 0.12, 1.8, 0.06)),
+  punch: () => { noise(0, 0.12, 0.35, 800, 3000, 1); osc('sine', 95, 38, 0.1, 0.5, 0.95); noise(0.1, 0.2, 0.5, 900, 200, 0.7); },
+  breath: () => noise(0, 1.4, 0.08, 800, 400, 1),
 };
 function play(n) { if (store.prefs.sound && ac) try { CUES[n](); } catch (e) {} }
+// start / strike / rest sounds come from the chosen world
+function cue(kind) { play(world().snd[kind]); }
 function buzz(p) { if (store.prefs.vibrate && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
 function say(t) {
   if (!t || !store.prefs.voice || !('speechSynthesis' in window)) return;
@@ -476,15 +527,15 @@ function enter(quiet, prev) {
   const s = T.segs[T.idx];
   if (prev && prev.type === 'work' && !quiet) strike();
   if (quiet) return;
-  if (s.type === 'work') { if (!prev || prev.type !== 'work') play('draw'); buzz([60, 40, 60]); }
-  else if (s.type === 'rest') { setTimeout(() => play('sheathe'), 700); buzz(200); }
+  if (s.type === 'work') { if (!prev || prev.type !== 'work') cue('start'); buzz([60, 40, 60]); }
+  else if (s.type === 'rest') { setTimeout(() => cue('rest'), 700); buzz(200); }
   else play('bell');
   say(s.speak);
 }
 function segFinish(prev) {
   T.status = 'done'; T.idx = T.segs.length - 1;
   if (prev && prev.type === 'work') strike(true);
-  setTimeout(() => { play('gong'); say('お見事'); }, 900);
+  setTimeout(() => { play('gong'); say(world().words); }, 900);
   buzz([200, 100, 200, 100, 500]); wake(false);
 }
 function segTick() {
@@ -512,7 +563,7 @@ function viewSeg() {
     else if (store.mode === 'circuit') sub = `${c.items.length}種目 × ${c.rounds}ラウンド`;
     return { phase: 'idle', label: modeName(store.mode), time: clock(total), sub, next: 'タップで構える', fill: 0, rounds: { n: first.orbs, lit: 0, cur: -1 } };
   }
-  if (T.status === 'done') return { phase: 'done', label: '完了', time: clock(total), sub: 'お見事', next: `合計 ${jp(total)}`, fill: 1, rounds: { n: first.orbs, lit: first.orbs, cur: -1 } };
+  if (T.status === 'done') return { phase: 'done', label: '完了', time: clock(total), sub: world().words, next: `合計 ${jp(total)}`, fill: 1, rounds: { n: first.orbs, lit: first.orbs, cur: -1 } };
   const s = segs[T.idx], now = T.status === 'paused' ? T.pausedAt : Date.now();
   const rem = Math.max(0, s.dur - (now - T.segStart) / 1000), nx = segs[T.idx + 1];
   const f = rem / s.dur;
@@ -528,8 +579,11 @@ function viewSeg() {
 /* ---------- rest timer (gym: only the rest is timed; tap when a set ends = the cut) ----------
    phase 'ready': training, nothing counts; the screen shows the rest that the next tap starts.
    phase 'rest': counting down. When it ends, the timer is set to the next rest (next set, or the next exercise). */
-const R = { phase: 'ready', item: 0, done: [], restStart: 0, restDur: 0, beep: '', started: false };
+const R = { phase: 'ready', item: 0, done: [], restStart: 0, restDur: 0, workStart: 0, workDur: 0, beep: '', started: false };
 const items = () => cfg().items;
+// progress is kept per day, so a reload in the middle of a workout loses nothing
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+function saveRun() { store.run = { day: today(), menu: cfg().menu || '', item: R.item, done: R.done.slice(), finished: R.phase === 'done' }; save(); }
 function syncDone() {
   const n = items().length;
   while (R.done.length < n) R.done.push(0);
@@ -543,18 +597,25 @@ function nextOpenItem(from) {
   for (let k = 1; k <= n; k++) { const i = (from + k) % n; if (!itemDone(i)) return i; }
   return -1;
 }
-function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.started = false; syncDone(); wake(false); }
+function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.started = false; syncDone(); wake(false); saveRun(); }
+// a timed exercise (plank etc.): the tap starts its countdown; zero is the cut and the rest follows
+function startWork() {
+  audio(); R.phase = 'work'; R.started = true; R.workStart = Date.now(); R.workDur = items()[R.item].work; R.beep = '';
+  cue('start'); buzz([60, 40, 60]); wake(true);
+}
 function completeSet() {
   audio(); syncDone();
+  if (R.phase === 'ready' && items()[R.item].work > 0) { startWork(); return; }
   R.done[R.item]++; R.started = true;
   const finished = allDone();
   strike(finished);
   if (finished) {
-    R.phase = 'done'; setTimeout(() => { play('gong'); say('全種目完了。お見事'); }, 900); buzz([200, 100, 200, 100, 500]); wake(false);
+    R.phase = 'done'; saveRun();
+    setTimeout(() => { play('gong'); say('全種目完了。' + world().words); }, 900); buzz([200, 100, 200, 100, 500]); wake(false);
     return;
   }
   R.phase = 'rest'; R.restStart = Date.now(); R.restDur = items()[R.item].rest; R.beep = '';
-  setTimeout(() => play('sheathe'), 700); buzz(200); wake(true);
+  setTimeout(() => cue('rest'), 700); buzz(200); wake(true); saveRun();
 }
 function endRest() {
   syncDone();
@@ -562,7 +623,7 @@ function endRest() {
   if (itemDone(R.item)) { const n = nextOpenItem(R.item); if (n >= 0) R.item = n; }
   R.phase = 'ready';
   const it = items()[R.item], set = R.done[R.item] + 1;
-  play('draw'); buzz([60, 40, 60]);
+  cue('start'); buzz([60, 40, 60]); saveRun();
   say(R.item !== was ? `次は${it.name}` : it.sets > 0 && set === it.sets ? 'ラストセット' : `${set}セット目`);
 }
 // while training this changes the exercise's rest time and keeps it; while resting it changes only this rest
@@ -580,10 +641,18 @@ function adjRest(d) {
 function jumpItem(i) {
   syncDone();
   if (i < 0 || i >= items().length || R.phase === 'done') return;
-  R.item = i;
+  if (R.phase === 'work') return;
+  R.item = i; saveRun();
   if (R.phase === 'ready') toast(`${items()[i].name}にしました`);
 }
 function restTick() {
+  if (R.phase === 'work') {
+    const rem = R.workDur - (Date.now() - R.workStart) / 1000;
+    if (rem <= 0) { completeSet(); return; }
+    const c = Math.ceil(rem);
+    if (c <= 3 && R.beep !== c) { R.beep = c; play(c === 1 ? 'bigdrum' : 'drum'); buzz(40); beat(); }
+    return;
+  }
   if (R.phase !== 'rest') return;
   const rem = R.restDur - (Date.now() - R.restStart) / 1000;
   if (rem <= 0) { endRest(); return; }
@@ -596,7 +665,12 @@ function viewRest() {
   const it = items()[R.item], done = R.done[R.item];
   const rounds = it.sets > 0 ? { n: it.sets, lit: done, cur: done } : { n: Math.min(12, done + 1), lit: done, cur: done };
   const total = R.done.reduce((a, b) => a + b, 0);
-  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(total), sub: `${items().length}種目　${total}セット`, next: 'お見事', fill: 1, rounds: { n: rounds.n, lit: rounds.n, cur: -1 } };
+  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(total), sub: `${items().length}種目　${total}セット`, next: world().words, fill: 1, rounds: { n: rounds.n, lit: rounds.n, cur: -1 } };
+  if (R.phase === 'work') {
+    const rem = Math.max(0, R.workDur - (Date.now() - R.workStart) / 1000), f = rem / R.workDur;
+    return { phase: 'work', label: it.name, long: true, cap: '動作', time: remain(rem), sub: setLabel(R.item), next: `0秒で休憩 ${jp(it.rest)}`,
+      fill: 1 - f, charge: 1 - f, tension: clamp((3.2 - rem) / 3.2, 0, 1), rounds };
+  }
   if (R.phase === 'rest') {
     const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
     const nextI = itemDone(R.item) ? nextOpenItem(R.item) : R.item;
@@ -606,6 +680,8 @@ function viewRest() {
   const lastOfItem = it.sets > 0 && done + 1 >= it.sets;
   const after = lastOfItem ? nextOpenItem(R.item) : R.item;
   const isLast = lastOfItem && after < 0;
+  if (it.work > 0) return { phase: 'work', label: it.name, long: true, cap: '動作の時間', time: clock(it.work), sub: setLabel(R.item),
+    next: isLast ? 'タップで開始　これが最後' : `タップで開始　その後 休憩 ${jp(it.rest)}`, fill: 0, rounds };
   return { phase: 'work', label: it.name, long: true, cap: isLast ? '最後のセット' : '次の休憩', time: isLast ? '—' : clock(it.rest), sub: setLabel(R.item),
     next: isLast ? '終わったらタップで完了' : lastOfItem && after !== R.item ? `この後の休憩 ${jp(it.rest)} → 次は ${items()[after].name}` : `セットが終わったらタップ　休憩 ${jp(it.rest)}`,
     fill: 0, rounds };
@@ -614,7 +690,7 @@ function viewRest() {
 /* ---------- stopwatch ---------- */
 const W = { status: 'idle', start: 0, acc: 0, laps: [] };
 const swEl = () => W.acc + (W.status === 'running' ? Date.now() - W.start : 0);
-function swStart() { audio(); W.start = Date.now(); W.status = 'running'; play('draw'); wake(true); }
+function swStart() { audio(); W.start = Date.now(); W.status = 'running'; cue('start'); wake(true); }
 function swPause() { W.acc += Date.now() - W.start; W.status = 'paused'; wake(false); }
 function swReset() { W.status = 'idle'; W.acc = 0; W.laps = []; }
 function swLap() { const e = swEl(), prev = W.laps.length ? W.laps[W.laps.length - 1].at : 0; W.laps.push({ at: e, d: e - prev }); play('lap'); buzz(30); }
@@ -648,7 +724,9 @@ function controls() {
   if (m === 'rest') {
     if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(endRest), noStage: true }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
     if (R.phase === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(resetRest) }, c: { ic: 'reset', t: 'もう一度', fn: A(resetRest), noStage: true }, r: gear };
-    return { l: { tx: '−15', t: '休憩 −15秒', fn: A(() => adjRest(-15)) }, c: { ic: 'cut', t: 'セット完了', fn: A(completeSet) }, r: { tx: '+15', t: '休憩 +15秒', fn: A(() => adjRest(15)) } };
+    const lr = { l: { tx: '−15', t: '休憩 −15秒', fn: A(() => adjRest(-15)) }, r: { tx: '+15', t: '休憩 +15秒', fn: A(() => adjRest(15)) } };
+    if (R.phase === 'work') return { ...lr, c: { ic: 'cut', t: '終える', fn: A(completeSet), noStage: true } };
+    return { ...lr, c: items()[R.item].work > 0 ? { ic: 'play', t: `${jp(items()[R.item].work)} スタート`, fn: A(completeSet) } : { ic: 'cut', t: 'セット完了', fn: A(completeSet) } };
   }
   if (m === 'stopwatch') {
     if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
@@ -661,29 +739,53 @@ function controls() {
 }
 
 /* ---------- the strike ---------- */
-// one of these pictures is chosen at random for each cut; rot = angle of the light line drawn over it
-const STRIKES = [
-  { s: 'issen', rot: -9 }, { s: 'issen_kesa', rot: -56 }, { s: 'issen_gyaku', rot: -40 },
-  { s: 'issen_karatake', rot: 90 }, { s: 'issen_jumonji', rot: 26, rot2: -26 },
-];
-const loadedStrikes = new Set();
-STRIKES.forEach(v => { const im = new Image(); im.onload = () => loadedStrikes.add(v.s); im.src = `assets/${v.s}.webp`; });
+/* ---------- worlds ----------
+   Each world names its pictures (assets/<name>.webp): charge = work, rest, done, and the strike pictures,
+   one of which is chosen at random for each cut (rot = angle of the light line drawn over it, rot2 = a second line).
+   kanji = the one-letter mark per phase; snd = start / strike / rest cues; particle = what drifts across the screen. */
+const WORLDS = {
+  iai: { name: '居合', charge: 'kamae', rest: 'noto', fin: 'kanryo', words: 'お見事',
+    strikes: [{ s: 'issen', rot: -9 }, { s: 'issen_kesa', rot: -56 }, { s: 'issen_gyaku', rot: -40 }, { s: 'issen_karatake', rot: 90 }, { s: 'issen_jumonji', rot: 26, rot2: -26 }],
+    kanji: { idle: '構', prep: '支', work: '斬', rest: '納', done: '極' }, snd: { start: 'draw', strike: 'slash', rest: 'sheathe' }, particle: 'leaf', gauge: 'katana', marker: 'bamboo' },
+  kyudo: { name: '弓道', charge: 'kyudo_kamae', rest: 'kyudo_zanshin', fin: 'kyudo_kanryo', words: '的中',
+    strikes: [{ s: 'kyudo_sha1', rot: -4 }, { s: 'kyudo_sha2', rot: -4 }],
+    kanji: { idle: '引', prep: '整', work: '引', rest: '残', done: '中' }, snd: { start: 'string', strike: 'arrow', rest: 'bell' }, particle: 'petal', gauge: 'plain', marker: 'gem' },
+  nami: { name: '大波', charge: 'nami_michi', rest: 'nami_nagi', fin: 'nami_kanryo', words: '見事',
+    strikes: [{ s: 'nami_kudake1', rot: -14 }, { s: 'nami_kudake2', rot: 14 }],
+    kanji: { idle: '満', prep: '寄', work: '満', rest: '凪', done: '極' }, snd: { start: 'surge', strike: 'crash', rest: 'waves' }, particle: 'spray', gauge: 'plain', marker: 'gem' },
+  nova: { name: '超新星', charge: 'nova_shushuku', rest: 'nova_seiun', fin: 'nova_kanryo', words: '新星誕生',
+    strikes: [{ s: 'nova_bakuhatsu1', rot: 0 }, { s: 'nova_bakuhatsu2', rot: 90 }],
+    kanji: { idle: '縮', prep: '集', work: '縮', rest: '漂', done: '星' }, snd: { start: 'hum', strike: 'boom', rest: 'shimmer' }, particle: 'star', gauge: 'plain', marker: 'gem' },
+  ki: { name: '気功拳', charge: 'ki_tame', rest: 'ki_iki', fin: 'ki_kanryo', words: '押忍',
+    strikes: [{ s: 'ki_geki1', rot: 0 }, { s: 'ki_geki2', rot: 90 }],
+    kanji: { idle: '溜', prep: '構', work: '溜', rest: '息', done: '極' }, snd: { start: 'hum', strike: 'punch', rest: 'breath' }, particle: 'ember', gauge: 'plain', marker: 'gem' },
+};
+function world() { return WORLDS[store.prefs.world] || WORLDS.iai; }
+let loadedStrikes = new Set(), scenes = [];
+function buildScenes() {
+  const w = world(), names = [w.charge, ...w.strikes.map(v => v.s), w.rest, w.fin];
+  const box = document.getElementById('scenes');
+  box.innerHTML = names.map(n => `<div class="scene${n === w.charge ? ' charge' : ''}" data-s="${n}" style="background-image:url('assets/${n}.webp')"></div>`).join('');
+  scenes = [...box.children];
+  loadedStrikes = new Set();
+  w.strikes.forEach(v => { const im = new Image(); im.onload = () => loadedStrikes.add(v.s); im.src = `assets/${v.s}.webp`; });
+}
 let lastStrike = '';
 function pickStrike() {
-  const pool = STRIKES.filter(v => loadedStrikes.has(v.s) && v.s !== lastStrike);
-  const v = pool.length ? pool[Math.floor(Math.random() * pool.length)] : STRIKES[0];
+  const all = world().strikes, pool = all.filter(v => loadedStrikes.has(v.s) && v.s !== lastStrike);
+  const v = pool.length ? pool[Math.floor(Math.random() * pool.length)] : all[0];
   lastStrike = v.s;
   return v;
 }
 let striking = 0, burst = 0;
 function strike(final) {
   const v = pickStrike();
-  play('slash'); buzz([30, 30, 260]);
+  cue('strike'); buzz([30, 30, 260]);
   app.style.setProperty('--rot', v.rot + 'deg');
   app.style.setProperty('--rot2', (v.rot2 ?? v.rot) + 'deg');
   app.classList.toggle('double', v.rot2 != null);
   app.classList.remove('strike'); void app.offsetWidth; app.classList.add('strike');
-  if (v.rot2 != null) setTimeout(() => play('slash'), 140);
+  if (v.rot2 != null) setTimeout(() => cue('strike'), 140);
   showScene(v.s, true);
   burst = 1;
   clearTimeout(striking);
@@ -693,9 +795,14 @@ function strike(final) {
 /* ---------- rendering ---------- */
 const app = $('#app'), stage = $('#stage'), timeEl = $('#time'), labelEl = $('#label'), kanjiEl = $('#kanji'), phaseEl = $('#phase');
 const subEl = $('#sub'), nextEl = $('#next'), capEl = $('#cap'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
-const root = document.documentElement, scenes = [...document.querySelectorAll('.scene')];
-const KANJI = { idle: '構', prep: '支', work: '斬', rest: '納', done: '極' };
-const SCENE = { idle: 'kamae', prep: 'kamae', work: 'kamae', rest: 'noto', done: 'kanryo' };
+const root = document.documentElement;
+const sceneOf = phase => { const w = world(); return phase === 'rest' ? w.rest : phase === 'done' ? w.fin : w.charge; };
+function applyWorld() {
+  root.dataset.world = store.prefs.world || 'iai';
+  buildScenes();
+  katana.classList.toggle('plain', world().gauge !== 'katana');
+  groveN = -1; leaves = []; last.scene = ''; last.kanji = '';
+}
 
 let last = {}, ctlSig = '', ctlFns = {}, groveN = -1;
 function showScene(name, fast) {
@@ -712,9 +819,9 @@ function timeHTML(str, tenth) {
 function setText(el, k, v) { if (last[k] !== v) { last[k] = v; el.textContent = v; } }
 function render() {
   const v = view();
-  if (app.dataset.phase !== v.phase) app.dataset.phase = v.phase;
-  if (!striking) showScene(SCENE[v.phase] || 'kamae', false);
-  setText(kanjiEl, 'kanji', KANJI[v.phase] || '構');
+  if (app.dataset.phase !== v.phase) { app.dataset.phase = v.phase; root.dataset.phase = v.phase; }
+  if (!striking) showScene(sceneOf(v.phase), false);
+  setText(kanjiEl, 'kanji', world().kanji[v.phase] || world().kanji.work);
   setText(labelEl, 'label', v.label);
   phaseEl.classList.toggle('long', !!v.long);
   setText(capEl, 'cap', v.cap || '');
@@ -766,7 +873,8 @@ function renderGrove(o) {
     grove.hidden = n === 0;
     const w = n <= 8 ? 11 : n <= 12 ? 9 : n <= 20 ? 7 : 5;
     grove.style.setProperty('--w', w + 'px'); grove.style.setProperty('--g', (n <= 8 ? 14 : n <= 12 ? 10 : n <= 20 ? 6 : 4) + 'px');
-    grove.innerHTML = Array.from({ length: n }, () => '<i class="bamboo"></i>').join('');
+    grove.classList.toggle('gems', world().marker === 'gem');
+    grove.innerHTML = Array.from({ length: n }, () => `<i class="${world().marker}"></i>`).join('');
     last.grove = '';
   }
   const k = o.lit + ':' + o.cur;
@@ -787,10 +895,29 @@ function sizeCanvas() {
   dpr = Math.min(2, window.devicePixelRatio || 1); cw = innerWidth; ch = innerHeight;
   cv.width = cw * dpr; cv.height = ch * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
+// what drifts depends on the world: maple leaves, cherry petals, sea spray, star dust (pulled to the core while charging), rising embers
 function newLeaf(y) {
-  return { x: Math.random() * cw, y: y ?? -20 - Math.random() * ch * .3, s: 5 + Math.random() * 8, r: Math.random() * 6.28, vr: (Math.random() - .5) * .06,
-    vx: (Math.random() - .3) * .5, vy: .35 + Math.random() * .6, sw: Math.random() * 6.28, hue: Math.random() < .2 ? 18 : 352 - Math.random() * 10, bx: 0, by: 0 };
+  const t = world().particle, r = Math.random;
+  const p = { t, x: r() * cw, y: y ?? -20 - r() * ch * .3, s: 5 + r() * 8, r: r() * 6.28, vr: (r() - .5) * .06,
+    vx: (r() - .3) * .5, vy: .35 + r() * .6, sw: r() * 6.28, hue: r() < .2 ? 18 : 352 - r() * 10, bx: 0, by: 0 };
+  if (t === 'petal') { p.s = 4 + r() * 5; p.vy = .25 + r() * .45; p.hue = 335 + r() * 15; }
+  else if (t === 'spray') { p.s = .8 + r() * 2.2; p.vx = 1 + r() * 1.6; p.vy = .8 + r() * 1.6; p.x = r() * cw * 1.2 - cw * .2; }
+  else if (t === 'star') { p.s = .6 + r() * 1.8; p.x = r() * cw; p.y = y ?? r() * ch; p.vx = (r() - .5) * .2; p.vy = (r() - .5) * .2; p.hue = r() < .5 ? 320 : 40; }
+  else if (t === 'ember') { p.s = .8 + r() * 2.4; p.y = y ?? ch + 10 + r() * ch * .2; p.vx = (r() - .5) * .6; p.vy = -(.6 + r() * 1.4); p.hue = 30 + r() * 20; }
+  return p;
 }
+function drawDot(l) {
+  const a = l.t === 'star' ? .4 + .6 * Math.abs(Math.sin(l.sw * 3)) : .75;
+  cx.fillStyle = l.t === 'spray' ? `rgba(235,245,255,${a * .7})` : `hsla(${l.hue}, 100%, ${l.t === 'star' ? 85 : 62}%, ${a})`;
+  if (l.t !== 'spray') { cx.shadowColor = `hsla(${l.hue}, 100%, 60%, .9)`; cx.shadowBlur = 6; }
+  cx.beginPath(); cx.arc(l.x, l.y, l.s, 0, 6.28); cx.fill(); cx.shadowBlur = 0;
+}
+function drawPetal(l) {
+  cx.save(); cx.translate(l.x, l.y); cx.rotate(l.r); cx.scale(Math.cos(l.sw * 1.7) * .9 + .1, 1);
+  cx.fillStyle = `hsla(${l.hue}, 70%, 84%, .85)`;
+  cx.beginPath(); cx.ellipse(0, 0, l.s * .55, l.s, 0, 0, 6.28); cx.fill(); cx.restore();
+}
+const offscreen = l => l.t === 'ember' ? l.y < -30 : l.t === 'star' ? l.x < -20 || l.x > cw + 20 || l.y < -20 || l.y > ch + 20 : l.y > ch + 30 || l.x < -40 || l.x > cw + 40;
 // a maple leaf: five lobes of different lengths, toothed edges, a stem; it flutters by squashing on one axis
 function drawLeaf(l) {
   cx.save(); cx.translate(l.x, l.y); cx.rotate(l.r); cx.scale(Math.cos(l.sw * 1.7) * .9 + .1, 1);
@@ -812,18 +939,29 @@ function drawLeaf(l) {
 }
 function stepLeaves() {
   if (reduced) return;
-  const want = fx.phase === 'rest' ? 10 : fx.phase === 'work' ? 18 + Math.round(fx.charge * 26) : 14;
+  const many = world().particle === 'star' || world().particle === 'spray' || world().particle === 'ember' ? 2.4 : 1;
+  const want = Math.round((fx.phase === 'rest' ? 10 : fx.phase === 'work' ? 18 + fx.charge * 26 : 14) * many);
   while (leaves.length < want) leaves.push(newLeaf(leaves.length < 4 ? Math.random() * ch : undefined));
   // time slows in the last seconds before the cut
   const speed = fx.phase === 'rest' ? .55 : 1 - fx.tension * .85;
   if (burst) { leaves.forEach(l => { const dx = l.x - cw / 2, dy = l.y - ch * .47, d = Math.hypot(dx, dy) || 1; l.bx = dx / d * (8 + Math.random() * 10); l.by = dy / d * (6 + Math.random() * 8); }); burst = 0; }
   cx.clearRect(0, 0, cw, ch);
+  const core = [cw / 2, ch * .62];
   for (let i = leaves.length - 1; i >= 0; i--) {
     const l = leaves[i];
-    l.sw += .02 * speed; l.x += (l.vx + Math.sin(l.sw) * .6) * speed + l.bx; l.y += l.vy * speed + l.by; l.r += l.vr * speed;
+    l.sw += .02 * speed;
+    if (l.t === 'star') {
+      // star dust falls into the collapsing star while the work charges
+      const dx = core[0] - l.x, dy = core[1] - l.y, d = Math.hypot(dx, dy) || 1, pull = fx.phase === 'work' ? .3 + fx.charge * 2.2 : 0;
+      l.x += (l.vx + dx / d * pull) * speed + l.bx; l.y += (l.vy + dy / d * pull) * speed + l.by;
+      if (d < 14 && pull) { leaves[i] = newLeaf(); continue; }
+    } else {
+      const sway = l.t === 'leaf' || l.t === 'petal' ? Math.sin(l.sw) * .6 : 0;
+      l.x += (l.vx + sway) * speed + l.bx; l.y += l.vy * speed + l.by; l.r += l.vr * speed;
+    }
     l.bx *= .9; l.by *= .9;
-    if (l.y > ch + 30 || l.x < -40 || l.x > cw + 40) { if (leaves.length > want) leaves.splice(i, 1); else leaves[i] = newLeaf(); continue; }
-    drawLeaf(l);
+    if (offscreen(l)) { if (leaves.length > want) leaves.splice(i, 1); else leaves[i] = newLeaf(); continue; }
+    if (l.t === 'leaf') drawLeaf(l); else if (l.t === 'petal') drawPetal(l); else drawDot(l);
   }
 }
 addEventListener('resize', sizeCanvas); sizeCanvas();
@@ -847,7 +985,7 @@ function allPresets() { return PRESETS[store.mode].concat(store.custom[store.mod
 function renderPresets() {
   if (store.mode === 'rest') {
     syncDone();
-    presetsEl.innerHTML = items().map((it, i) =>
+    presetsEl.innerHTML = `<button class="chip menu" data-act="menus">${esc(cfg().menu || 'メニュー')} ▾</button>` + items().map((it, i) =>
       `<button class="chip${i === R.item ? ' on' : ''}${itemDone(i) ? ' done' : ''}" data-i="${i}">${esc(it.name)}　${R.done[i]}${it.sets > 0 ? '/' + it.sets : ''}</button>`).join('') +
       '<button class="chip" data-act="edit">＋ メニューを編集</button>';
     return;
@@ -857,9 +995,44 @@ function renderPresets() {
 }
 function applyPreset(i) {
   const p = allPresets()[i]; if (!p) return;
-  Object.assign(cfg(), clone(p.cfg)); save(); rebuild(); if (store.mode === 'rest') resetRest();
+  if (store.mode === 'rest') { switchMenu(p); toast(`${p.name} にしました`); return; }
+  Object.assign(cfg(), clone(p.cfg)); save(); rebuild();
   renderPresets(); render(); if (sheetOpen) buildSheet();
   toast(`${p.name} にしました`);
+}
+// rest timer: change today's menu; a menu edited before comes back with those edits
+function switchMenu(p, fresh) {
+  const c = cfg(), name = p.cfg.menu || p.name, kept = !fresh && store.menus && store.menus[name];
+  save();
+  c.menu = name; c.items = clone(kept || p.cfg.items);
+  c.items.forEach(it => { if (it.work == null) it.work = 0; });
+  resetRest(); renderPresets(); render(); if (sheetOpen) buildSheet();
+}
+const ORDER = DAY_MENUS.map(m => m.name);
+const nextInOrder = name => { const i = ORDER.indexOf(name); return i >= 0 ? DAY_MENUS[(i + 1) % ORDER.length] : null; };
+// on a new day the PPL rotation moves on from the last menu that had sets done; the same day restores progress
+function initRest() {
+  const run = store.run, c = cfg();
+  if (run && run.day === today() && run.menu === (c.menu || '')) {
+    R.done = (run.done || []).slice(); R.item = run.item || 0; R.started = R.done.some(n => n > 0);
+    if (run.finished) R.phase = 'done';
+    syncDone(); return;
+  }
+  if (run && run.day !== today() && (run.done || []).some(n => n > 0)) store.lastMenu = run.menu;
+  const next = run && run.day !== today() && nextInOrder(store.lastMenu);
+  if (next && next.name !== c.menu) { switchMenu(next); setTimeout(() => toast(`今日は ${next.name}（前回は ${store.lastMenu}）`), 600); return; }
+  resetRest();
+}
+// a quick picker for the day's menu, opened from the gold chip
+let pendingMenu = -1;
+function openMenus() {
+  const c = cfg(), list = allPresets(), next = nextInOrder(store.lastMenu);
+  const desc = p => p.cfg.items.slice(0, 3).map(it => it.name.replace(/（.*?）/g, '')).join('・') + (p.cfg.items.length > 3 ? ' ほか' : '');
+  sheet.innerHTML = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>今日のメニュー</h2><button class="done-btn" data-act="close">閉じる</button></div>` +
+    `<div class="menus">${list.map((p, i) => `<button class="menu-btn${(p.cfg.menu || p.name) === c.menu ? ' on' : ''}" data-menu="${i}"><b>${esc(p.name)}</b>` +
+    `${next && next.name === p.name ? '<em>前回の次</em>' : ''}<span>${esc(desc(p))}</span></button>`).join('')}</div>` +
+    `<p class="note">前回は ${esc(store.lastMenu || '—')}。種目や休憩の変更はメニューごとに覚えています。</p></div>`;
+  pendingMenu = -1; sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -875,6 +1048,8 @@ function stepper(id, val, attrs) {
 function buildSheet() {
   const m = store.mode, c = cfg(), b = busy();
   let h = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${modeName(m)}の設定</h2><button class="done-btn" data-act="close">完了</button></div>`;
+  h += `<div class="sec"><h3>世界</h3><div class="worlds">${Object.entries(WORLDS).map(([id, w]) =>
+    `<button class="world-btn${(store.prefs.world || 'iai') === id ? ' on' : ''}" data-world="${id}" style="background-image:url('assets/${w.charge}.webp')"><span>${w.name}</span></button>`).join('')}</div></div>`;
   if (m === 'rest') h += restSheet();
   else if (m !== 'stopwatch') {
     if (b) h += `<p class="note">タイマーが動いている間は時間を変えられません。リセットすると変えられます。</p>`;
@@ -911,18 +1086,23 @@ function restSheet() {
     `<div class="menu-item"><div class="row"><input id="ritem-${i}" data-rname="${i}" value="${esc(it.name)}" maxlength="24" aria-label="種目${i + 1}の名前">` +
     `<button class="x" data-rdel="${i}" aria-label="${esc(it.name)}を消す" ${c.items.length <= 1 ? 'disabled' : ''}>${ICON.x}</button></div>` +
     `<div class="nums"><span class="num">セット数${stepper('rs-' + i, it.sets || '∞', `data-ik="sets" data-ii="${i}"`)}</span>` +
-    `<span class="num">休憩${stepper('rr-' + i, jp(it.rest), `data-ik="rest" data-ii="${i}"`)}</span></div>` +
+    `<span class="num">休憩${stepper('rr-' + i, jp(it.rest), `data-ik="rest" data-ii="${i}"`)}</span>` +
+    `<span class="num">動作${stepper('rw-' + i, it.work ? jp(it.work) : 'なし', `data-ik="work" data-ii="${i}"`)}</span></div>` +
     `<span class="prog">${R.done[i]}セット済み</span></div>`).join('') +
-    `</div>${c.items.length < 15 ? '<button class="wide" data-act="radd">＋ 種目を追加</button>' : ''}<p class="note">セット数を 0（∞）にすると、回数を決めずに続けられます。</p></div>`;
+    `</div>${c.items.length < 15 ? '<button class="wide" data-act="radd">＋ 種目を追加</button>' : ''}` +
+    `<p class="note">セット数を 0（∞）にすると、回数を決めずに続けられます。「動作」に時間を入れた種目（プランクなど）は、タップで動作のカウントが始まり、0秒で休憩に入ります。</p></div>`;
   h += `<div class="sec"><h3>マイメニュー</h3>` +
     (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS.rest.length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '<p class="note">今日の種目を保存すると、次から1タップで呼び出せます。</p>') +
     (mine.length < 8 ? `<div class="row-save"><input id="menu-name" placeholder="メニューの名前（例：胸の日）" maxlength="16" aria-label="保存するメニューの名前"><button class="wide" data-act="rsave">今の種目を保存</button></div>` : '') + `</div>`;
-  h += `<div class="sec"><button class="wide" data-act="rreset">進み具合を最初に戻す</button></div>`;
+  const base = PRESETS.rest.find(p => (p.cfg.menu || p.name) === c.menu);
+  h += `<div class="sec"><button class="wide" data-act="rreset">進み具合を最初に戻す</button>` +
+    (base ? `<button class="wide" data-act="rdefault">${esc(c.menu)} を最初の内容に戻す（プランの種目・休憩）</button>` : '') + `</div>`;
   return h;
 }
 function changeRestItem(i, k, d) {
   const it = items()[i];
   if (k === 'sets') { it.sets = clamp(it.sets + d, 0, 20); const o = $('#rs-' + i); if (o) o.textContent = it.sets || '∞'; }
+  else if (k === 'work') { it.work = clamp((it.work || 0) + d * 5, 0, 300); const o = $('#rw-' + i); if (o) o.textContent = it.work ? jp(it.work) : 'なし'; }
   else { it.rest = clamp(it.rest + d * 15, 15, 900); const o = $('#rr-' + i); if (o) o.textContent = jp(it.rest); }
   save(); refreshChips(); render();
 }
@@ -967,6 +1147,13 @@ sheet.addEventListener('click', e => {
     (store.custom.rest = store.custom.rest || []).push({ name, cfg: clone(c) }); save(); buildSheet(); toast(`「${name}」を保存しました`); return;
   }
   if (act === 'rreset') { resetRest(); buildSheet(); renderPresets(); render(); toast('進み具合を最初に戻しました'); return; }
+  if (act === 'rdefault') { const p = PRESETS.rest.find(x => (x.cfg.menu || x.name) === c.menu); if (p) { switchMenu(p, true); toast(`${p.name} を最初の内容に戻しました`); } return; }
+  if (t.dataset.world) { store.prefs.world = t.dataset.world; save(); applyWorld(); buildSheet(); render(); toast(`${world().name}の世界にしました`); return; }
+  if (t.dataset.menu != null) {
+    const i = +t.dataset.menu;
+    if (busy() && pendingMenu !== i) { pendingMenu = i; toast('もう一度押すと切り替え（今日の進み具合は最初に戻ります）'); return; }
+    switchMenu(allPresets()[i]); closeSheet(); toast(`${allPresets()[i].name} にしました`); return;
+  }
   if (act === 'close') closeSheet();
   else if (act === 'add') { c.items.push({ name: `種目${c.items.length + 1}`, dur: 30 }); save(); rebuild(); buildSheet(); render(); const inp = $('#item-' + (c.items.length - 1)); if (inp) inp.focus(); }
   else if (act === 'savepreset') { (store.custom[m] = store.custom[m] || []).push({ name: summary(m, c), cfg: clone(c) }); save(); buildSheet(); renderPresets(); render(); toast('マイプリセットに保存しました'); }
@@ -986,6 +1173,7 @@ presetsEl.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.i != null) { jumpItem(+t.dataset.i); render(); }
   else if (t.dataset.act === 'edit') openSheet();
+  else if (t.dataset.act === 'menus') openMenus();
   else if (t.dataset.p != null) applyPreset(+t.dataset.p);
 });
 ctlEl.addEventListener('click', e => { const t = e.target.closest('[data-k]'); if (t && !t.disabled) { const b = ctlFns[t.dataset.k]; if (b && b.fn) b.fn(); } });
@@ -1000,7 +1188,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 function frame() { logic(); render(); stepLeaves(); requestAnimationFrame(frame); }
 setInterval(logic, 250); // keeps phases advancing when animation frames are throttled
 
-rebuild(); renderTabs(); renderPresets(); render(); requestAnimationFrame(frame);
+applyWorld(); rebuild(); initRest(); renderTabs(); renderPresets(); render(); requestAnimationFrame(frame);
 
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) {}
