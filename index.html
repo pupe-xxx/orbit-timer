@@ -93,6 +93,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .brand b{color:var(--paper);font-weight:700}
 .icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(8,7,10,.45);display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .icon-btn svg{width:19px;height:19px}
+[hidden]{display:none!important}
+.bar-actions{display:flex;align-items:center;gap:8px}
+#undoBtn,#resetBtn{width:auto;display:flex;gap:6px;padding:0 13px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.06em}
+#undoBtn{border-color:var(--gold);color:var(--gold)}
 .tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:none;padding:7px 12px;border:0;border-bottom:1.5px solid transparent;background:none;color:var(--mist);font-weight:500;font-size:13px;letter-spacing:.08em;transition:color .3s,border-color .3s}
@@ -225,10 +229,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .sw[aria-checked="true"]{background:var(--crimson)}
 .sw[aria-checked="true"]::after{transform:translateX(22px);background:#fff}
 
-.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-150%);z-index:30;max-width:calc(100% - 32px);
+.toast{position:fixed;left:50%;top:calc(104px + env(safe-area-inset-top,0px));transform:translate(-50%,-12px);opacity:0;z-index:30;max-width:calc(100% - 32px);
   padding:10px 16px;border-radius:999px;background:var(--ink2);border:1px solid var(--line);font-size:13px;font-weight:500;
-  transition:transform .35s cubic-bezier(.2,.8,.2,1);pointer-events:none;text-align:center}
-.toast.show{transform:translate(-50%,0)}
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s;pointer-events:none;text-align:center}
+.toast.show{transform:translate(-50%,0);opacity:1}
 
 @media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} .ctl .b{width:52px;height:52px} .ctl.main .b{width:72px;height:72px} .grove{height:30px} .bamboo{height:28px} }
 @media (prefers-reduced-motion:reduce){
@@ -252,7 +256,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   <header class="top">
     <div class="bar">
       <div class="brand"><b>O</b>RBIT</div>
+      <div class="bar-actions">
+      <button class="icon-btn" id="undoBtn" aria-label="1つ取り消す" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span>戻す</span></button>
+      <button class="icon-btn" id="resetBtn" aria-label="リセット" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg><span>リセット</span></button>
       <button class="icon-btn" id="gear" aria-label="設定を開く"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
+      </div>
     </div>
     <nav class="tabs" id="tabs" role="tablist" aria-label="モード"></nav>
   </header>
@@ -580,10 +588,28 @@ function viewSeg() {
    phase 'ready': training, nothing counts; the screen shows the rest that the next tap starts.
    phase 'rest': counting down. When it ends, the timer is set to the next rest (next set, or the next exercise). */
 const R = { phase: 'ready', item: 0, done: [], restStart: 0, restDur: 0, workStart: 0, workDur: 0, beep: '', started: false };
-const items = () => cfg().items;
+const restCfg = () => store.cfg.rest;   // the rest timer always reads its own settings, whatever mode is open
+const items = () => restCfg().items;
 // progress is kept per day, so a reload in the middle of a workout loses nothing
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-function saveRun() { store.run = { day: today(), menu: cfg().menu || '', item: R.item, done: R.done.slice(), finished: R.phase === 'done' }; save(); }
+function saveRun() {
+  store.run = { day: today(), menu: restCfg().menu || '', item: R.item, done: R.done.slice(), finished: R.phase === 'done',
+    phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur };
+  save();
+}
+// undo: each step the user takes is kept, so a mistaken tap can be taken back one at a time
+const history = [];
+const snap = () => ({ phase: R.phase, item: R.item, done: R.done.slice(), restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur, started: R.started });
+function remember() { history.push(snap()); if (history.length > 30) history.shift(); }
+function undo() {
+  const s = history.pop(); if (!s) return;
+  if (striking) { clearTimeout(striking); striking = 0; app.classList.remove('strike'); }
+  Object.assign(R, s, { done: s.done.slice(), beep: '' }); syncDone();
+  // a rest whose time ran out while it was undone ends normally on the next tick
+  last.scene = ''; saveRun();
+  toast(s.phase === 'rest' ? '休憩に戻しました' : s.phase === 'work' ? '動作の途中に戻しました' : `${items()[R.item].name}　${setLabel(R.item)}に戻しました`);
+}
+let undoHints = 0;
 function syncDone() {
   const n = items().length;
   while (R.done.length < n) R.done.push(0);
@@ -597,16 +623,19 @@ function nextOpenItem(from) {
   for (let k = 1; k <= n; k++) { const i = (from + k) % n; if (!itemDone(i)) return i; }
   return -1;
 }
-function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.started = false; syncDone(); wake(false); saveRun(); }
+function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.started = false; history.length = 0; syncDone(); wake(false); saveRun(); }
 // a timed exercise (plank etc.): the tap starts its countdown; zero is the cut and the rest follows
 function startWork() {
   audio(); R.phase = 'work'; R.started = true; R.workStart = Date.now(); R.workDur = items()[R.item].work; R.beep = '';
-  cue('start'); buzz([60, 40, 60]); wake(true);
+  cue('start'); buzz([60, 40, 60]); wake(true); saveRun();
 }
-function completeSet() {
+// byHand = the user tapped (kept for undo); the plank countdown reaching zero calls it with false
+function completeSet(byHand = true) {
   audio(); syncDone();
+  if (byHand) remember();
   if (R.phase === 'ready' && items()[R.item].work > 0) { startWork(); return; }
   R.done[R.item]++; R.started = true;
+  if (byHand && undoHints < 2) { undoHints++; setTimeout(() => toast('間違えた時は、右上の「戻す」で取り消せます'), 1400); }
   const finished = allDone();
   strike(finished);
   if (finished) {
@@ -617,13 +646,15 @@ function completeSet() {
   R.phase = 'rest'; R.restStart = Date.now(); R.restDur = items()[R.item].rest; R.beep = '';
   setTimeout(() => cue('rest'), 700); buzz(200); wake(true); saveRun();
 }
-function endRest() {
+function endRest(byHand) {
   syncDone();
+  if (byHand) remember();
   const was = R.item;
   if (itemDone(R.item)) { const n = nextOpenItem(R.item); if (n >= 0) R.item = n; }
   R.phase = 'ready';
   const it = items()[R.item], set = R.done[R.item] + 1;
-  cue('start'); buzz([60, 40, 60]); saveRun();
+  // the end of a rest must be heard across the gym: a bell, the world's start sound and a long buzz
+  play('bell'); setTimeout(() => cue('start'), 250); buzz([300, 120, 300]); saveRun();
   say(R.item !== was ? `次は${it.name}` : it.sets > 0 && set === it.sets ? 'ラストセット' : `${set}セット目`);
 }
 // while training this changes the exercise's rest time and keeps it; while resting it changes only this rest
@@ -641,22 +672,24 @@ function adjRest(d) {
 function jumpItem(i) {
   syncDone();
   if (i < 0 || i >= items().length || R.phase === 'done') return;
-  if (R.phase === 'work') return;
-  R.item = i; saveRun();
+  if (R.phase === 'work' || i === R.item) return;
+  remember(); R.item = i; saveRun();
   if (R.phase === 'ready') toast(`${items()[i].name}にしました`);
 }
 function restTick() {
   if (R.phase === 'work') {
     const rem = R.workDur - (Date.now() - R.workStart) / 1000;
-    if (rem <= 0) { completeSet(); return; }
+    if (rem <= 0) { completeSet(false); return; }
     const c = Math.ceil(rem);
     if (c <= 3 && R.beep !== c) { R.beep = c; play(c === 1 ? 'bigdrum' : 'drum'); buzz(40); beat(); }
     return;
   }
   if (R.phase !== 'rest') return;
   const rem = R.restDur - (Date.now() - R.restStart) / 1000;
-  if (rem <= 0) { endRest(); return; }
+  if (rem <= 0) { endRest(false); return; }
   const c = Math.ceil(rem);
+  // ten seconds left: time to pick up the weights
+  if (c === 10 && R.restDur > 20 && R.beep !== 10) { R.beep = 10; play('lap'); setTimeout(() => play('lap'), 160); buzz([80, 80, 80]); say('あと10秒'); }
   if (c <= 3 && R.beep !== c) { R.beep = c; play('drum'); buzz(40); beat(); }
 }
 function setLabel(i) { const it = items()[i], n = Math.min(R.done[i] + 1, it.sets || Infinity); return it.sets > 0 ? `セット ${n} / ${it.sets}` : `${n}セット目`; }
@@ -715,6 +748,18 @@ function busy() {
   return T.status === 'running' || T.status === 'paused';
 }
 function resetAll() { rebuild(); resetRest(); swReset(); wake(false); }
+// reset only the current mode (the top-bar button and the running timers' reset)
+function resetMode() {
+  if (striking) { clearTimeout(striking); striking = 0; app.classList.remove('strike'); last.scene = ''; }
+  if (store.mode === 'rest') resetRest(); else if (store.mode === 'stopwatch') swReset(); else rebuild();
+  wake(false);
+}
+// resetting a running timer takes a second tap within 3 seconds, so a stray tap cannot wipe a workout
+let resetArmed = 0;
+function confirmReset(fn) {
+  if (Date.now() - resetArmed < 3000) { resetArmed = 0; fn(); toast('リセットしました'); }
+  else { resetArmed = Date.now(); toast('もう一度押すとリセットします'); }
+}
 function view() { return store.mode === 'rest' ? viewRest() : store.mode === 'stopwatch' ? viewSW() : viewSeg(); }
 function logic() { if (store.mode === 'rest') restTick(); else if (store.mode !== 'stopwatch') segTick(); }
 
@@ -722,17 +767,17 @@ function controls() {
   const m = store.mode, A = f => () => { f(); render(); };
   const gear = { ic: 'gear', t: '設定', fn: openSheet };
   if (m === 'rest') {
-    if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(endRest), noStage: true }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
+    if (R.phase === 'rest') return { l: { tx: '−15', t: '15秒短く', fn: A(() => adjRest(-15)) }, c: { ic: 'skip', t: '休憩を終える', fn: A(() => endRest(true)), noStage: true }, r: { tx: '+15', t: '15秒のばす', fn: A(() => adjRest(15)) } };
     if (R.phase === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(resetRest) }, c: { ic: 'reset', t: 'もう一度', fn: A(resetRest), noStage: true }, r: gear };
     const lr = { l: { tx: '−15', t: '休憩 −15秒', fn: A(() => adjRest(-15)) }, r: { tx: '+15', t: '休憩 +15秒', fn: A(() => adjRest(15)) } };
     if (R.phase === 'work') return { ...lr, c: { ic: 'cut', t: '終える', fn: A(completeSet), noStage: true } };
     return { ...lr, c: items()[R.item].work > 0 ? { ic: 'play', t: `${jp(items()[R.item].work)} スタート`, fn: A(completeSet) } : { ic: 'cut', t: 'セット完了', fn: A(completeSet) } };
   }
   if (m === 'stopwatch') {
-    if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
+    if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', fn: A(() => confirmReset(resetMode)) }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
     return { l: { ic: 'reset', t: 'リセット', fn: A(swReset), dis: W.status === 'idle' }, c: { ic: 'play', t: W.status === 'paused' ? '再開' : 'スタート', fn: A(swStart) }, r: { ic: 'lap', t: 'ラップ', dis: true } };
   }
-  if (T.status === 'running') return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'pause', t: '一時停止', fn: A(segPause) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
+  if (T.status === 'running') return { l: { ic: 'reset', t: 'リセット', fn: A(() => confirmReset(resetMode)) }, c: { ic: 'pause', t: '一時停止', fn: A(segPause) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
   if (T.status === 'paused') return { l: { ic: 'reset', t: 'リセット', fn: A(() => { rebuild(); wake(false); }) }, c: { ic: 'play', t: '再開', fn: A(segStartRun) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
   if (T.status === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(rebuild) }, c: { ic: 'reset', t: 'もう一度', fn: A(segStartRun), noStage: true }, r: gear };
   return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'play', t: 'スタート', fn: A(segStartRun) }, r: gear };
@@ -841,6 +886,8 @@ function render() {
   app.style.setProperty('--tension', tension.toFixed(3));
   app.classList.toggle('tense', tension > 0.05 && !striking);
   renderGrove(v.rounds);
+  $('#undoBtn').hidden = !(store.mode === 'rest' && history.length);
+  $('#resetBtn').hidden = !(store.mode === 'rest' ? R.started || R.phase === 'done' : busy() || T.status === 'done');
   fx.charge = v.charge || 0; fx.tension = tension; fx.phase = v.phase;
   const c = controls();
   const sig = ['l', 'c', 'r'].map(k => [c[k].ic, c[k].tx, c[k].t, !!c[k].dis].join(',')).join('|');
@@ -1002,7 +1049,7 @@ function applyPreset(i) {
 }
 // rest timer: change today's menu; a menu edited before comes back with those edits
 function switchMenu(p, fresh) {
-  const c = cfg(), name = p.cfg.menu || p.name, kept = !fresh && store.menus && store.menus[name];
+  const c = restCfg(), name = p.cfg.menu || p.name, kept = !fresh && store.menus && store.menus[name];
   save();
   c.menu = name; c.items = clone(kept || p.cfg.items);
   c.items.forEach(it => { if (it.work == null) it.work = 0; });
@@ -1012,10 +1059,13 @@ const ORDER = DAY_MENUS.map(m => m.name);
 const nextInOrder = name => { const i = ORDER.indexOf(name); return i >= 0 ? DAY_MENUS[(i + 1) % ORDER.length] : null; };
 // on a new day the PPL rotation moves on from the last menu that had sets done; the same day restores progress
 function initRest() {
-  const run = store.run, c = cfg();
+  const run = store.run, c = restCfg();
   if (run && run.day === today() && run.menu === (c.menu || '')) {
     R.done = (run.done || []).slice(); R.item = run.item || 0; R.started = R.done.some(n => n > 0);
     if (run.finished) R.phase = 'done';
+    // a rest or a timed exercise that was counting when the app closed carries on (or ends on the next tick)
+    else if (run.phase === 'rest' && run.restDur) { Object.assign(R, { phase: 'rest', restStart: run.restStart, restDur: run.restDur, started: true }); }
+    else if (run.phase === 'work' && run.workDur) { Object.assign(R, { phase: 'work', workStart: run.workStart, workDur: run.workDur, started: true }); }
     syncDone(); return;
   }
   if (run && run.day !== today() && (run.done || []).some(n => n > 0)) store.lastMenu = run.menu;
@@ -1026,7 +1076,7 @@ function initRest() {
 // a quick picker for the day's menu, opened from the gold chip
 let pendingMenu = -1;
 function openMenus() {
-  const c = cfg(), list = allPresets(), next = nextInOrder(store.lastMenu);
+  const c = restCfg(), list = PRESETS.rest.concat(store.custom.rest || []), next = nextInOrder(store.lastMenu);
   const desc = p => p.cfg.items.slice(0, 3).map(it => it.name.replace(/（.*?）/g, '')).join('・') + (p.cfg.items.length > 3 ? ' ほか' : '');
   sheet.innerHTML = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>今日のメニュー</h2><button class="done-btn" data-act="close">閉じる</button></div>` +
     `<div class="menus">${list.map((p, i) => `<button class="menu-btn${(p.cfg.menu || p.name) === c.menu ? ' on' : ''}" data-menu="${i}"><b>${esc(p.name)}</b>` +
@@ -1152,7 +1202,8 @@ sheet.addEventListener('click', e => {
   if (t.dataset.menu != null) {
     const i = +t.dataset.menu;
     if (busy() && pendingMenu !== i) { pendingMenu = i; toast('もう一度押すと切り替え（今日の進み具合は最初に戻ります）'); return; }
-    switchMenu(allPresets()[i]); closeSheet(); toast(`${allPresets()[i].name} にしました`); return;
+    const p = PRESETS.rest.concat(store.custom.rest || [])[i];
+    switchMenu(p); closeSheet(); toast(`${p.name} にしました`); return;
   }
   if (act === 'close') closeSheet();
   else if (act === 'add') { c.items.push({ name: `種目${c.items.length + 1}`, dur: 30 }); save(); rebuild(); buildSheet(); render(); const inp = $('#item-' + (c.items.length - 1)); if (inp) inp.focus(); }
@@ -1168,6 +1219,8 @@ scrim.addEventListener('click', closeSheet);
 
 /* ---------- events ---------- */
 $('#gear').addEventListener('click', openSheet);
+$('#undoBtn').addEventListener('click', () => { undo(); render(); });
+$('#resetBtn').addEventListener('click', () => { confirmReset(resetMode); render(); });
 $('#tabs').addEventListener('click', e => { const t = e.target.closest('[data-m]'); if (t) switchMode(t.dataset.m); });
 presetsEl.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
