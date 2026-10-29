@@ -1,6 +1,6 @@
 // Offline cache: app files are cache-first, Google Fonts are cached as they load.
 // Only the default world is listed; another world's pictures are cached the first time it is opened.
-const CACHE = 'orbit-worlds-v7';
+const CACHE = 'orbit-worlds-v8';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png',
   'assets/kamae.webp', 'assets/issen.webp', 'assets/noto.webp', 'assets/kanryo.webp',
   'assets/issen_kesa.webp', 'assets/issen_gyaku.webp', 'assets/issen_karatake.webp', 'assets/issen_jumonji.webp'];

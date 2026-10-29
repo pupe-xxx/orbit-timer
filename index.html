@@ -369,14 +369,14 @@ const DAY_MENUS = [
     ex('リアレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }), ex('ハンマーカール', 3, 60, 'S', 'M', { r: '10〜12回' }),
     ex('スパイダーカール', 3, 60, 'S', 'M', { r: '10〜12回', n: 1 }), ex('スーツケース・ホールド', 2, 60, 'S', 'K', { r: '45秒（左右）', h: [45, 45], s: 1 })] } },
   { name: 'Legs B', cfg: { menu: 'Legs B', items: [ex('疑似プランシェ腕立て', 3, 120, 'K', 'F', { r: '6〜10回' }),
-    ex('片脚を伸ばしたタック保持', 3, 120, 'K', 'F', { r: '5秒（左右）', h: [5, 5], s: 1 }), ex('アドバンスド・タック保持', 2, 120, 'K', 'F', { r: '5〜10秒', h: [5, 10] }),
+    ex('タック保持', 3, 120, 'K', 'F', { r: '10〜20秒', h: [10, 20] }), ex('アドバンスド・タック保持', 2, 120, 'K', 'F', { r: '5〜10秒', h: [5, 10] }),
     ex('ゴブレットスクワット（軽め）', 3, 75, 'F', 'K', { r: '15回' }), ex('ブルガリアンスプリット（軽め）', 3, 90, 'F', 'K', { r: '10回' }),
     ex('ダンベル・ヒップスラスト', 3, 90, 'F', 'R', { r: '12回', n: 1 }), ex('カーフレイズ', 3, 45, 'S', 'M', { r: '20回' }),
     ex('ホロウボディ・ホールド', 3, 60, 'S', 'F', { r: '20〜30秒', h: [20, 30], n: 1 }), ex('レッグレイズ', 3, 45, 'S', 'F', { r: '12回' }),
     ex('テイトプレス', 3, 60, 'S', 'R', { r: '12回', n: 1 })] } },
 ];
 // bump when the plan's menus change: saved copies of the day menus are replaced by the new ones once
-const MENU_VER = 5;
+const MENU_VER = 6;
 const HOLD_LEAD = 5;   // a hold starts counting this many seconds after the tap, to get into position
 const SIDE_REST = 15;  // the short rest between the right and the left side of one set
 DEF.rest = clone(DAY_MENUS[0].cfg);
