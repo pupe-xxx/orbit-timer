@@ -32,7 +32,10 @@
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
-html{height:100%;box-sizing:border-box;background:var(--ink)}
+/* a double tap on the timer must not zoom the page (taps come fast between sets); pinch zoom stays */
+html{height:100%;box-sizing:border-box;background:var(--ink);touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* size by the small viewport, so the numerals do not change size when the browser bars show or hide */
+@supports (height:1svh){ :root{--U:min(100vw, 58svh, 560px)} }
 body{height:100%;margin:0;background:var(--ink);color:var(--paper);font-family:var(--font-ui);overflow:hidden;
   -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer}
@@ -123,7 +126,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .pill.ef-K{border-color:#86c7b4;color:#c6eadf}
 .pill.ef-F{border-color:var(--paper)}
 .cap{font-size:12px;font-weight:700;letter-spacing:.4em;padding-left:.4em;color:var(--gold);text-shadow:0 1px 8px #000;margin-bottom:-.4em}
-.cap:empty{display:none}
+.cap:empty{visibility:hidden}
+.cap:empty::before{content:"\00a0"}
 .time{font-family:var(--font-brush);font-weight:400;line-height:.86;font-size:calc(var(--U) * var(--k,.5));display:flex;align-items:flex-end;color:var(--paper);
   text-shadow:.035em .035em 0 color-mix(in srgb,var(--crimson) 85%,transparent), 0 0 .02em #000, 0 .06em .35em rgba(0,0,0,.85)}
 #app[data-phase="rest"] .time{text-shadow:.03em .03em 0 rgba(60,90,150,.7), 0 .06em .35em rgba(0,0,0,.85)}
@@ -136,7 +140,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   text-shadow:0 0 4px #000,0 1px 8px #000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .sub{font-size:14px;font-weight:500;letter-spacing:.16em;color:var(--paper)}
 .next{font-size:12.5px;letter-spacing:.12em;color:#d9d3cc}
-.sub:empty,.next:empty{display:none}
+/* empty lines keep their height, so the numerals and the buttons do not move between phases */
+.sub:empty,.next:empty{visibility:hidden}
+.sub:empty::before,.next:empty::before{content:"\00a0"}
 
 /* katana gauge: hilt on the left, light runs to the tip */
 .katana{position:relative;width:min(88vw,440px);height:18px;display:flex;align-items:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,.8))}
@@ -248,7 +254,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s;pointer-events:none;text-align:center}
 .toast.show{transform:translate(-50%,0);opacity:1}
 
-@media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} .ctl .b{width:52px;height:52px} .ctl.main .b{width:72px;height:72px} .grove{height:30px} .bamboo{height:28px} }
+@media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} @supports (height:1svh){ :root{--U:min(100vw, 52svh, 560px)} } .ctl .b{width:52px;height:52px} .ctl.main .b{width:72px;height:72px} .grove{height:30px} .bamboo{height:28px} }
 @media (prefers-reduced-motion:reduce){
   #app.tense,#app.strike,.time.beat,.bamboo.cur::after{animation:none!important}
   .scene{transition:opacity .4s}
@@ -336,8 +342,10 @@ const DEF = {
 // rk = how to treat the rest: S keep it / F a guide, may be longer / K a guide for skills, never shorter
 // ef = how far to push: M last set to failure / R stop 1-2 short / K leave reps in reserve / F stop when the form breaks
 // o.r = target reps shown with the set count; o.h = a hold (counted up in seconds); o.n = new exercise: 3 in reserve until it is learnt
-const ex = (name, sets, rest, rk = '', ef = '', o = {}) => ({ name, sets, rest, work: 0, rk, ef, reps: o.r || '', hold: !!o.h, nw: !!o.n });
-const HS = [ex('壁の逆立ち', 2, 60, 'K', 'F', { r: '45〜60秒', h: 1 }), ex('壁なしの逆立ち', 6, 45, 'K', 'F', { r: '動かずに', h: 1 })];
+// o.h = [shortest, longest] seconds of a hold (a sound at each); o.s = held once per side (right, a short rest, left)
+const ex = (name, sets, rest, rk = '', ef = '', o = {}) => ({ name, sets, rest, work: 0, rk, ef, reps: o.r || '',
+  hold: !!o.h, hmin: o.h ? o.h[0] : 0, hmax: o.h ? o.h[1] : 0, sides: !!o.s, nw: !!o.n });
+const HS = [ex('壁の逆立ち', 2, 60, 'K', 'F', { r: '45〜60秒', h: [45, 60] }), ex('壁なしの逆立ち', 6, 45, 'K', 'F', { r: '動かずに30〜60秒', h: [30, 60] })];
 const DAY_MENUS = [
   { name: 'Push A', cfg: { menu: 'Push A', items: [...HS, ex('ダンベルベンチプレス', 4, 120, 'F', 'R', { r: '8〜10回' }),
     ex('インクラインダンベルプレス', 3, 90, 'F', 'R', { r: '10〜12回' }), ex('ダンベルフライ', 2, 60, 'S', 'R', { r: '12回' }),
@@ -347,8 +355,8 @@ const DAY_MENUS = [
     ex('インクライン・ダンベルロー（肘を開く）', 3, 75, 'F', 'R', { r: '10〜12回' }), ex('ダンベルRDL', 3, 120, 'F', 'K', { r: '8〜10回' }),
     ex('リアレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }), ex('インクラインダンベルカール', 3, 60, 'S', 'M', { r: '10〜12回' }),
     ex('リバースカール', 3, 60, 'S', 'M', { r: '12回', n: 1 })] } },
-  { name: 'Legs A', cfg: { menu: 'Legs A', items: [ex('プランシェ・リーン', 2, 90, 'K', 'F', { r: '15〜20秒', h: 1 }),
-    ex('アドバンスド・タック保持', 3, 150, 'K', 'F', { r: '5〜10秒', h: 1 }), ex('タック・プランシェ腕立て', 3, 120, 'K', 'F', { r: '限界の2回手前' }),
+  { name: 'Legs A', cfg: { menu: 'Legs A', items: [ex('プランシェ・リーン', 2, 90, 'K', 'F', { r: '15〜20秒', h: [15, 20] }),
+    ex('アドバンスド・タック保持', 3, 150, 'K', 'F', { r: '5〜10秒', h: [5, 10] }), ex('タック・プランシェ腕立て', 3, 120, 'K', 'F', { r: '限界の2回手前' }),
     ex('ゴブレットスクワット', 4, 90, 'F', 'K', { r: '12回' }), ex('ダンベル・ヒップスラスト（重め）', 3, 120, 'F', 'R', { r: '8〜10回', n: 1 }),
     ex('ブルガリアンスプリット', 3, 120, 'F', 'K', { r: '8回' }), ex('カーフレイズ', 3, 45, 'S', 'M', { r: '15〜20回' }),
     ex('ゾットマンカール', 3, 60, 'S', 'R', { r: '8〜10回', n: 1 })] } },
@@ -359,17 +367,18 @@ const DAY_MENUS = [
   { name: 'Pull B', cfg: { menu: 'Pull B', items: [...HS, ex('ワンハンドロー（重め）', 4, 120, 'F', 'R', { r: '6〜8回' }),
     ex('インクライン・ダンベルロー（肘を体に沿わせる）', 3, 75, 'F', 'R', { r: '10〜12回' }), ex('ダンベルプルオーバー', 3, 75, 'F', 'R', { r: '10〜12回' }),
     ex('リアレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }), ex('ハンマーカール', 3, 60, 'S', 'M', { r: '10〜12回' }),
-    ex('スパイダーカール', 3, 60, 'S', 'M', { r: '10〜12回', n: 1 }), ex('スーツケース・ホールド', 2, 60, 'S', 'K', { r: '45秒（左右）', h: 1 })] } },
+    ex('スパイダーカール', 3, 60, 'S', 'M', { r: '10〜12回', n: 1 }), ex('スーツケース・ホールド', 2, 60, 'S', 'K', { r: '45秒（左右）', h: [45, 45], s: 1 })] } },
   { name: 'Legs B', cfg: { menu: 'Legs B', items: [ex('疑似プランシェ腕立て', 3, 120, 'K', 'F', { r: '6〜10回' }),
-    ex('片脚を伸ばしたタック保持', 3, 120, 'K', 'F', { r: '5秒（左右）', h: 1 }), ex('アドバンスド・タック保持', 2, 120, 'K', 'F', { r: '5〜10秒', h: 1 }),
+    ex('片脚を伸ばしたタック保持', 3, 120, 'K', 'F', { r: '5秒（左右）', h: [5, 5], s: 1 }), ex('アドバンスド・タック保持', 2, 120, 'K', 'F', { r: '5〜10秒', h: [5, 10] }),
     ex('ゴブレットスクワット（軽め）', 3, 75, 'F', 'K', { r: '15回' }), ex('ブルガリアンスプリット（軽め）', 3, 90, 'F', 'K', { r: '10回' }),
     ex('ダンベル・ヒップスラスト', 3, 90, 'F', 'R', { r: '12回', n: 1 }), ex('カーフレイズ', 3, 45, 'S', 'M', { r: '20回' }),
-    ex('ホロウボディ・ホールド', 3, 60, 'S', 'F', { r: '20〜30秒', h: 1, n: 1 }), ex('レッグレイズ', 3, 45, 'S', 'F', { r: '12回' }),
+    ex('ホロウボディ・ホールド', 3, 60, 'S', 'F', { r: '20〜30秒', h: [20, 30], n: 1 }), ex('レッグレイズ', 3, 45, 'S', 'F', { r: '12回' }),
     ex('テイトプレス', 3, 60, 'S', 'R', { r: '12回', n: 1 })] } },
 ];
 // bump when the plan's menus change: saved copies of the day menus are replaced by the new ones once
-const MENU_VER = 4;
-const HOLD_LEAD = 3;   // a hold starts counting this many seconds after the tap, to get into position
+const MENU_VER = 5;
+const HOLD_LEAD = 5;   // a hold starts counting this many seconds after the tap, to get into position
+const SIDE_REST = 15;  // the short rest between the right and the left side of one set
 DEF.rest = clone(DAY_MENUS[0].cfg);
 const PRESETS = {
   interval: [
@@ -503,6 +512,12 @@ const CUES = {
   bell: () => { [392, 588, 784].forEach((f, i) => osc('sine', f, 0, i * 0.02, 2.6, 0.18 / (i + 1))); },
   gong: () => { [98, 147, 196, 294].forEach((f, i) => osc('sine', f, f * 0.98, 0, 4 - i * 0.6, 0.35 / (i + 1))); noise(0, 0.2, 0.2, 400, 120, 0.6); },
   lap: () => osc('sine', 1760, 0, 0, 0.12, 0.08),
+  // each timer event has its own sound, so it can be told apart without looking:
+  // 15 seconds of rest left = two short square blips; the shortest hold reached = one rising chime;
+  // the longest hold reached = three wooden clacks; rest over = the bell
+  warn: () => { osc('square', 988, 0, 0, 0.09, 0.06); osc('square', 988, 0, 0.16, 0.09, 0.06); },
+  chime: () => { osc('sine', 784, 1568, 0, 0.5, 0.22); osc('triangle', 1568, 0, 0.12, 0.9, 0.08); },
+  clack: () => [0, 0.14, 0.28].forEach(t => { noise(t, 0.05, 0.5, 2500, 1200, 3); osc('sine', 1300, 900, t, 0.08, 0.25); }),
   // kyudo: the string creaks as it is drawn; release whistles and hits the target
   string: () => { osc('triangle', 110, 80, 0, 0.6, 0.15); noise(0, 0.5, 0.05, 600, 300, 2); },
   arrow: () => { noise(0, 0.25, 0.5, 5000, 900, 1.5); osc('sine', 160, 55, 0.22, 0.25, 0.7); noise(0.22, 0.06, 0.4, 1500, 400, 0.8); },
@@ -635,19 +650,19 @@ function viewSeg() {
    phase 'ready': training, nothing counts; the screen shows the rest that the next tap starts.
    phase 'rest': counting down. When it ends, the timer is set to the next rest (next set, or the next exercise). */
 // phase 'hold': a held position (planche, handstand) counts up from the tap; holds[i] keeps today's seconds per exercise
-const R = { phase: 'ready', item: 0, done: [], holds: [], restStart: 0, restDur: 0, workStart: 0, workDur: 0, holdStart: 0, beep: '', started: false };
+const R = { phase: 'ready', item: 0, done: [], holds: [], restStart: 0, restDur: 0, workStart: 0, workDur: 0, holdStart: 0, side: 0, sideRest: false, beep: '', started: false };
 const restCfg = () => store.cfg.rest;   // the rest timer always reads its own settings, whatever mode is open
 const items = () => restCfg().items;
 // progress is kept per day, so a reload in the middle of a workout loses nothing
 function saveRun() {
   store.run = { day: today(), menu: restCfg().menu || '', item: R.item, done: R.done.slice(), holds: R.holds.map(a => a.slice()), finished: R.phase === 'done',
-    phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart };
+    phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, side: R.side, sideRest: R.sideRest };
   save();
 }
 // undo: each step the user takes is kept, so a mistaken tap can be taken back one at a time
 const history = [];
 const snap = () => ({ phase: R.phase, item: R.item, done: R.done.slice(), holds: R.holds.map(a => a.slice()), restStart: R.restStart, restDur: R.restDur,
-  workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, started: R.started });
+  workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, side: R.side, sideRest: R.sideRest, started: R.started });
 function remember() { history.push(snap()); if (history.length > 30) history.shift(); }
 function undo() {
   const s = history.pop(); if (!s) return;
@@ -673,15 +688,18 @@ function nextOpenItem(from) {
   for (let k = 1; k <= n; k++) { const i = (from + k) % n; if (!itemDone(i)) return i; }
   return -1;
 }
-function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.holds = []; R.started = false; history.length = 0; syncDone(); wake(false); saveRun(); }
+function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.holds = []; R.side = 0; R.sideRest = false; R.started = false; history.length = 0; syncDone(); wake(false); saveRun(); }
 // a timed exercise (plank etc.): the tap starts its countdown; zero is the cut and the rest follows
 function startWork() {
   audio(); R.phase = 'work'; R.started = true; R.workStart = Date.now(); R.workDur = items()[R.item].work; R.beep = '';
   cue('start'); buzz([60, 40, 60]); wake(true); saveRun();
 }
-// a hold: the tap gives HOLD_LEAD seconds to get into position (drums), then counts up with a short beep every 5 seconds,
-// so the seconds can be heard with both hands on the floor. Tapping after coming down ends the set and keeps the seconds
+// a hold: the tap gives HOLD_LEAD seconds to get into position (drums on the last 3), then counts up; the chime sounds at the
+// shortest time and the clacks at the longest, so both can be heard with the hands on the floor. Tapping after coming down
+// ends it and keeps the seconds. A hold done per side (sides) is right, a SIDE_REST rest, then left; the set ends after the left
 const holdSecs = () => (Date.now() - R.holdStart) / 1000 - HOLD_LEAD;
+const sideTx = () => R.side ? '左' : '右';
+const bestKey = it => it.sides ? `${it.name}（${sideTx()}）` : it.name;
 function beginHold() {
   audio(); remember(); R.phase = 'hold'; R.started = true; R.holdStart = Date.now(); R.beep = '';
   buzz(40); wake(true); saveRun();
@@ -691,11 +709,17 @@ function endHold() {
   const s = holdSecs();
   // tapped again before the count began: nothing was held, go back to waiting
   if (s < 0) { history.pop(); R.phase = 'ready'; saveRun(); toast('保持をやめました'); return; }
-  const secs = Math.floor(s), it = items()[R.item];
+  const secs = Math.floor(s), it = items()[R.item], key = bestKey(it), side = it.sides ? sideTx() + ' ' : '';
   R.holds[R.item].push(secs);
-  if (secs > (store.best[it.name] || 0)) { store.best[it.name] = secs; setTimeout(() => toast(`${secs}秒　これまでの最高`), 900); }
-  else setTimeout(() => toast(`${secs}秒`), 900);
-  R.phase = 'ready'; completeSet(false);
+  const best = secs > (store.best[key] || 0);
+  if (best) store.best[key] = secs;
+  setTimeout(() => toast(`${side}${secs}秒${best ? '　これまでの最高' : ''}`), it.sides && !R.side ? 0 : 900);
+  if (it.sides && !R.side) {
+    // right side done: a short rest, then the left side of the same set
+    R.side = 1; R.sideRest = true; R.phase = 'rest'; R.restStart = Date.now(); R.restDur = SIDE_REST; R.beep = '';
+    cue('rest'); buzz(120); saveRun(); return;
+  }
+  R.side = 0; R.phase = 'ready'; completeSet(false);
 }
 // byHand = the user tapped (kept for undo); the plank countdown reaching zero calls it with false
 function completeSet(byHand = true) {
@@ -717,6 +741,12 @@ function completeSet(byHand = true) {
 function endRest(byHand) {
   syncDone();
   if (byHand) remember();
+  if (R.sideRest) {
+    // the rest between the sides of one set: the same set goes on with the left side
+    R.sideRest = false; R.phase = 'ready';
+    play('bell'); buzz([300, 120, 300]); saveRun(); say('左');
+    return;
+  }
   const was = R.item;
   if (itemDone(R.item)) { const n = nextOpenItem(R.item); if (n >= 0) R.item = n; }
   R.phase = 'ready';
@@ -740,19 +770,22 @@ function adjRest(d) {
 function jumpItem(i) {
   syncDone();
   if (i < 0 || i >= items().length || R.phase === 'done') return;
-  if (R.phase === 'work' || R.phase === 'hold' || i === R.item) return;
-  remember(); R.item = i; saveRun();
+  // not in the middle of a hold or between the two sides of one set
+  if (R.phase === 'work' || R.phase === 'hold' || R.sideRest || i === R.item) return;
+  remember(); R.item = i; R.side = 0; saveRun();
   if (R.phase === 'ready') toast(`${items()[i].name}にしました`);
 }
 function restTick() {
   if (R.phase === 'hold') {
-    const s = holdSecs();
-    if (s < 0) { const c = Math.ceil(-s); if (R.beep !== 'L' + c) { R.beep = 'L' + c; play('drum'); buzz(40); beat(); } return; }
-    const k = Math.floor(s / 5) * 5;
-    if (R.beep !== 'H' + k) {
-      if (k === 0) { cue('start'); buzz([60, 40, 60]); }
-      else { play('lap'); setTimeout(() => play('lap'), 160); say(`${k}秒`); }
-      R.beep = 'H' + k;
+    const s = holdSecs(), it = items()[R.item];
+    if (s < 0) { const c = Math.ceil(-s); if (c <= 3 && R.beep !== 'L' + c) { R.beep = 'L' + c; play('drum'); buzz(40); beat(); } return; }
+    // the count begins; then the shortest time (skipped when it equals the longest), then the longest
+    const step = it.hmax && s >= it.hmax ? 'max' : it.hmin && it.hmin < it.hmax && s >= it.hmin ? 'min' : 'go';
+    if (R.beep !== step) {
+      if (step === 'go') { cue('start'); buzz([60, 40, 60]); }
+      else if (step === 'min') { play('chime'); buzz(150); say('最低'); }
+      else { play('clack'); buzz([80, 60, 80, 60, 80]); say('最大'); }
+      R.beep = step;
     }
     return;
   }
@@ -766,15 +799,22 @@ function restTick() {
   if (R.phase !== 'rest') return;
   const rem = R.restDur - (Date.now() - R.restStart) / 1000;
   if (rem <= 0) { endRest(false); return; }
-  const c = Math.ceil(rem);
-  // ten seconds left: time to pick up the weights
-  if (c === 10 && R.restDur > 20 && R.beep !== 10) { R.beep = 10; play('lap'); setTimeout(() => play('lap'), 160); buzz([80, 80, 80]); say('あと10秒'); }
-  if (c <= 3 && R.beep !== c) { R.beep = c; play('drum'); buzz(40); beat(); }
+  // two sounds only: 15 seconds left (time to pick up the weights) and the bell at zero (in endRest)
+  if (!R.sideRest && R.restDur > 20 && Math.ceil(rem) <= 15 && R.beep !== 'W') { R.beep = 'W'; play('warn'); buzz([80, 80, 80]); say('あと15秒'); }
 }
 function setLabel(i) {
   const it = items()[i], n = Math.min(R.done[i] + 1, it.sets || Infinity);
-  return (it.sets > 0 ? `セット ${n} / ${it.sets}` : `${n}セット目`) + (it.reps ? `・${it.reps}` : '');
+  const reps = it.sides && i === R.item ? `${sideTx()}・${it.reps.replace('（左右）', '')}` : it.reps;
+  return (it.sets > 0 ? `セット ${n} / ${it.sets}` : `${n}セット目`) + (reps ? `・${reps}` : '');
 }
+// what a finished hold left: the last seconds (both sides for a per-side hold)
+function heldTx(i) {
+  const it = items()[i], h = R.holds[i];
+  if (!it.hold || !h.length) return '';
+  if (it.sides) return h.length >= 2 ? `保持 右 ${h[h.length - 2]}秒／左 ${h[h.length - 1]}秒` : `保持 右 ${h[h.length - 1]}秒`;
+  return `保持 ${h[h.length - 1]}秒（今日の最高 ${holdBest(i)}秒）`;
+}
+const holdRange = it => it.hmin && it.hmin < it.hmax ? `${it.hmin}秒と${it.hmax}秒で鳴る` : it.hmax ? `${it.hmax}秒で鳴る` : '';
 const holdBest = i => Math.max(0, ...R.holds[i]);
 // the two badges under the exercise name: how to treat the rest, how far to push the coming set.
 // While resting they speak about this rest and the next set; otherwise about the set at hand
@@ -799,32 +839,35 @@ function viewRest() {
   const total = R.done.reduce((a, b) => a + b, 0);
   if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(total), sub: `${items().length}種目　${total}セット`, next: world().words, fill: 1, rounds: { n: rounds.n, lit: rounds.n, cur: -1 } };
   if (R.phase === 'hold') {
-    const s = holdSecs(), lead = s < 0;
-    return { phase: 'work', label: it.name, long: true, cap: lead ? '構える' : '保持', time: lead ? String(Math.ceil(-s)) : clock(s), sub: setLabel(R.item),
-      next: lead ? `${HOLD_LEAD}秒後に数え始める` : '5秒ごとに鳴る　降りたらタップ', fill: lead ? 0 : (s % 5) / 5, charge: lead ? 1 + s / HOLD_LEAD : 0,
-      tension: lead ? clamp(1 + s / HOLD_LEAD, 0, 1) : 0, rounds, guide: guideOf(false) };
+    const s = holdSecs(), lead = s < 0, top = it.hmax || 60;
+    return { phase: 'work', label: it.name, long: true, cap: lead ? '構える' : '保持', time: clock(lead ? Math.ceil(-s) : s), sub: setLabel(R.item),
+      next: lead ? '0で数え始める' : [holdRange(it), '降りたらタップ'].filter(Boolean).join('　'), fill: lead ? 0 : Math.min(1, s / top),
+      charge: lead ? 1 + s / HOLD_LEAD : 0, tension: lead ? clamp(1 + s / HOLD_LEAD, 0, 1) : 0, rounds, guide: guideOf(false) };
   }
   if (R.phase === 'work') {
     const rem = Math.max(0, R.workDur - (Date.now() - R.workStart) / 1000), f = rem / R.workDur;
-    return { phase: 'work', label: it.name, long: true, cap: '動作', time: remain(rem), sub: setLabel(R.item), next: `0秒で休憩 ${jp(it.rest)}`,
+    return { phase: 'work', label: it.name, long: true, cap: '動作', time: clock(Math.ceil(rem - 1e-6)), sub: setLabel(R.item), next: `0秒で休憩 ${jp(it.rest)}`,
       fill: 1 - f, charge: 1 - f, tension: clamp((3.2 - rem) / 3.2, 0, 1), rounds, guide: guideOf(false) };
   }
   if (R.phase === 'rest') {
-    const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
+    // m:ss always, so the numerals keep their size when the rest drops under a minute
+    const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000), time = clock(Math.ceil(rem - 1e-6));
+    if (R.sideRest) return { phase: 'rest', label: '左右の間の休憩', time, sub: `次は ${setLabel(R.item)}`, next: heldTx(R.item),
+      fill: rem / R.restDur, rounds, guide: guideOf(false) };
     const nextI = itemDone(R.item) ? nextOpenItem(R.item) : R.item;
     const nextTx = nextI >= 0 ? `次は ${nextI === R.item ? '' : items()[nextI].name + '　'}${setLabel(nextI)}` : '';
-    const held = R.holds[R.item], heldTx = it.hold && held.length ? `保持 ${held[held.length - 1]}秒（今日の最高 ${holdBest(R.item)}秒）` : '';
-    return { phase: 'rest', label: '休憩', time: remain(rem), sub: nextTx,
-      next: heldTx || `${it.name}　${done}${it.sets > 0 ? ' / ' + it.sets : ''}セット完了`, fill: rem / R.restDur, rounds, guide: guideOf(true, nextI) };
+    return { phase: 'rest', label: '休憩', time, sub: nextTx,
+      next: heldTx(R.item) || `${it.name}　${done}${it.sets > 0 ? ' / ' + it.sets : ''}セット完了`, fill: rem / R.restDur, rounds, guide: guideOf(true, nextI) };
   }
   const lastOfItem = it.sets > 0 && done + 1 >= it.sets;
   const after = lastOfItem ? nextOpenItem(R.item) : R.item;
   const isLast = lastOfItem && after < 0;
   const guide = guideOf(false);
   if (it.hold) {
-    const best = store.best[it.name];
-    return { phase: 'work', label: it.name, long: true, cap: isLast ? '最後のセット' : '次の休憩', time: isLast ? '—' : clock(it.rest), sub: setLabel(R.item),
-      next: `タップで保持スタート` + (best ? `　これまでの最高 ${best}秒` : ''), fill: 0, rounds, guide };
+    // before a hold the numerals show the time to get into position, not the rest
+    const best = store.best[bestKey(it)];
+    return { phase: 'work', label: it.name, long: true, cap: '構える時間', time: clock(HOLD_LEAD), sub: setLabel(R.item),
+      next: `タップで構える` + (best ? `　これまでの最高 ${best}秒` : `　${holdRange(it)}`), fill: 0, rounds, guide };
   }
   if (it.work > 0) return { phase: 'work', label: it.name, long: true, cap: '動作の時間', time: clock(it.work), sub: setLabel(R.item),
     next: isLast ? 'タップで開始　これが最後' : `タップで開始　その後 休憩 ${jp(it.rest)}`, fill: 0, rounds, guide };
@@ -1185,7 +1228,7 @@ const nextInOrder = name => { const i = ORDER.indexOf(name); return i >= 0 ? DAY
 function initRest() {
   const run = store.run, c = restCfg();
   if (run && run.day === today() && run.menu === (c.menu || '')) {
-    R.done = (run.done || []).slice(); R.holds = (run.holds || []).map(a => a.slice()); R.item = run.item || 0; R.started = R.done.some(n => n > 0);
+    R.done = (run.done || []).slice(); R.holds = (run.holds || []).map(a => a.slice()); R.side = run.side || 0; R.sideRest = !!run.sideRest; R.item = run.item || 0; R.started = R.done.some(n => n > 0);
     if (run.finished) R.phase = 'done';
     // a rest or a timed exercise that was counting when the app closed carries on (or ends on the next tick)
     else if (run.phase === 'rest' && run.restDur) { Object.assign(R, { phase: 'rest', restStart: run.restStart, restDur: run.restDur, started: true }); }
