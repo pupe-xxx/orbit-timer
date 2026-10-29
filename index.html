@@ -108,6 +108,20 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .phase .kanji{font:400 22px/1 var(--font-brush);letter-spacing:0;padding:0;color:var(--p);text-shadow:0 0 12px color-mix(in srgb,var(--p) 60%,transparent)}
 .phase .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .phase.long .tx{letter-spacing:.08em}
+/* how to treat this rest and how far to push this set, from the training plan; the row keeps its height so nothing jumps */
+.guide{display:flex;gap:8px;justify-content:center;min-height:30px;max-width:100%}
+.guide.off{visibility:hidden}
+.pill{display:inline-flex;align-items:baseline;gap:5px;padding:5px 11px;border-radius:999px;border:1.5px solid var(--line);background:rgba(8,7,10,.6);
+  font:700 13.5px/1.25 var(--font-ui);letter-spacing:.04em;white-space:nowrap;color:var(--paper);text-shadow:0 1px 6px #000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.pill small{font-size:10.5px;font-weight:500;letter-spacing:.08em;color:#cfc9c2}
+@media (max-width:380px){ .guide{gap:6px} .pill{padding:5px 9px;font-size:12.5px;letter-spacing:.02em} .pill small{font-size:10px;letter-spacing:.04em} }
+@media (max-width:340px){ .pill small{display:none} }
+.pill.rk-S{border-color:var(--moon)}
+.pill.rk-F,.pill.rk-K{border-style:dashed;border-color:#b9b3ad}
+.pill.ef-M{border-color:#ff4d5e;background:rgba(150,10,32,.72)}
+.pill.ef-R{border-color:var(--gold);color:var(--gold)}
+.pill.ef-K{border-color:#86c7b4;color:#c6eadf}
+.pill.ef-F{border-color:var(--paper)}
 .cap{font-size:12px;font-weight:700;letter-spacing:.4em;padding-left:.4em;color:var(--gold);text-shadow:0 1px 8px #000;margin-bottom:-.4em}
 .cap:empty{display:none}
 .time{font-family:var(--font-brush);font-weight:400;line-height:.86;font-size:calc(var(--U) * var(--k,.5));display:flex;align-items:flex-end;color:var(--paper);
@@ -267,6 +281,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
   <main class="main" id="stage" role="button" tabindex="0" aria-label="タイマー">
     <div class="phase" id="phase"><span class="kanji" id="kanji">構</span><span class="tx" id="label"></span></div>
+    <div class="guide" id="guide" hidden></div>
     <div class="cap" id="cap"></div>
     <div class="time" id="time" aria-live="polite"></div>
     <div class="katana" id="katana" aria-hidden="true"><div class="tsuka"></div><div class="tsuba"></div><div class="blade"><i></i></div></div>
@@ -294,6 +309,7 @@ const $ = s => document.querySelector(s);
 const clone = o => JSON.parse(JSON.stringify(o));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const pad = n => String(n).padStart(2, '0');
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 
 const MODES = [
   { id: 'rest', name: '休憩タイマー' },
@@ -316,22 +332,33 @@ const DEF = {
   stopwatch: {},
 };
 
-// the PPL week from the training plan (Obsidian 07_健康/10_筋トレ/01_プラン.md): sets from "現在の重量", rest from "インターバル"
-const ex = (name, sets, rest, work = 0) => ({ name, sets, rest, work });
+// the PPL week from the training plan (Obsidian 07_健康/10_筋トレ/01_プラン.md "Day別メニュー"): sets, rest, and the two plan columns
+// rk = how to treat the rest: S keep it / F a guide, may be longer / K a guide for skills, never shorter
+// ef = how far to push: M last set to failure / R stop 1-2 short / K leave reps in reserve / F stop when the form breaks
+const ex = (name, sets, rest, rk = '', ef = '', work = 0) => ({ name, sets, rest, work, rk, ef });
+const HS = [ex('壁の逆立ち', 2, 60, 'K', 'F'), ex('壁なしの逆立ち', 6, 45, 'K', 'F')];
 const DAY_MENUS = [
-  { name: 'Push A', cfg: { menu: 'Push A', items: [ex('ダンベルベンチプレス', 4, 90), ex('インクラインダンベルプレス', 3, 75), ex('ダンベルフライ', 2, 60),
-    ex('サイドレイズ', 3, 60), ex('クローズグリップ・ダンベルプレス', 3, 60)] } },
-  { name: 'Pull A', cfg: { menu: 'Pull A', items: [ex('ワンハンドロー', 4, 90), ex('インクライン・ダンベルロー（肘を開く）', 3, 60), ex('ダンベルRDL', 3, 90),
-    ex('リアレイズ', 3, 60), ex('インクラインダンベルカール', 3, 60)] } },
-  { name: 'Legs A', cfg: { menu: 'Legs A', items: [ex('ゴブレットスクワット', 4, 90), ex('ダンベルRDL', 3, 75), ex('ブルガリアンスプリット', 3, 120),
-    ex('カーフレイズ', 3, 45)] } },
-  { name: 'Push B', cfg: { menu: 'Push B', items: [ex('ダンベルショルダープレス', 4, 90), ex('サイドレイズ', 4, 60), ex('サイドライイング・ラテラルレイズ', 3, 45),
-    ex('インクラインダンベルフライ', 3, 60), ex('ナロープッシュアップ', 3, 60)] } },
-  { name: 'Pull B', cfg: { menu: 'Pull B', items: [ex('ワンハンドロー（重め）', 4, 120), ex('インクライン・ダンベルロー（肘を体に沿わせる）', 3, 75),
-    ex('ダンベルプルオーバー', 3, 75), ex('リアレイズ', 3, 60), ex('ハンマーカール', 3, 60)] } },
-  { name: 'Legs B', cfg: { menu: 'Legs B', items: [ex('ゴブレットスクワット（軽め）', 3, 75), ex('ブルガリアンスプリット（軽め）', 3, 60), ex('ダンベル・ヒップスラスト', 3, 75),
-    ex('カーフレイズ', 3, 45), ex('プランク', 3, 60, 30), ex('レッグレイズ', 3, 45)] } },
+  { name: 'Push A', cfg: { menu: 'Push A', items: [ex('プランシェ・リーン', 3, 60, 'K', 'F'), ex('アドバンスド・タック保持', 4, 90, 'K', 'F'),
+    ex('タック・プランシェ腕立て', 3, 90, 'K', 'F'), ex('ダンベルベンチプレス', 4, 120, 'F', 'R'), ex('インクラインダンベルプレス', 3, 90, 'F', 'R'),
+    ex('ダンベルフライ', 2, 60, 'S', 'R'), ex('サイドレイズ', 3, 60, 'S', 'M'), ex('クローズグリップ・ダンベルプレス', 4, 75, 'F', 'R'),
+    ex('リバースリストカール', 3, 45, 'S', 'K')] } },
+  { name: 'Pull A', cfg: { menu: 'Pull A', items: [...HS, ex('ワンハンドロー', 4, 90, 'F', 'R'), ex('インクライン・ダンベルロー（肘を開く）', 3, 75, 'F', 'R'),
+    ex('ダンベルRDL', 3, 120, 'F', 'K'), ex('リアレイズ', 3, 60, 'S', 'M'), ex('インクラインダンベルカール', 3, 60, 'S', 'M'), ex('リバースカール', 3, 60, 'S', 'M')] } },
+  { name: 'Legs A', cfg: { menu: 'Legs A', items: [...HS, ex('ゴブレットスクワット', 4, 120, 'F', 'K'), ex('ダンベルRDL', 3, 120, 'F', 'K'),
+    ex('ブルガリアンスプリット', 3, 120, 'F', 'K'), ex('カーフレイズ', 3, 45, 'S', 'M'), ex('ゾットマンカール', 3, 60, 'S', 'R')] } },
+  { name: 'Push B', cfg: { menu: 'Push B', items: [ex('疑似プランシェ腕立て', 3, 90, 'K', 'F'), ex('片脚を伸ばしたタック保持', 3, 90, 'K', 'F'),
+    ex('アドバンスド・タック保持', 3, 90, 'K', 'F'), ex('ダンベルショルダープレス', 4, 120, 'F', 'R'), ex('サイドレイズ', 4, 60, 'S', 'M'),
+    ex('サイドライイング・ラテラルレイズ', 3, 45, 'S', 'M'), ex('インクラインダンベルフライ', 3, 60, 'S', 'R'), ex('ナロープッシュアップ', 3, 60, 'S', 'R'),
+    ex('オーバーヘッド・エクステンション', 3, 60, 'S', 'K'), ex('リストカール', 3, 45, 'S', 'M')] } },
+  { name: 'Pull B', cfg: { menu: 'Pull B', items: [...HS, ex('ワンハンドロー（重め）', 4, 120, 'F', 'R'), ex('インクライン・ダンベルロー（肘を体に沿わせる）', 3, 75, 'F', 'R'),
+    ex('ダンベルプルオーバー', 3, 75, 'F', 'R'), ex('リアレイズ', 3, 60, 'S', 'M'), ex('ハンマーカール', 3, 60, 'S', 'M'), ex('スパイダーカール', 3, 60, 'S', 'M'),
+    ex('スーツケース・ホールド', 2, 60, 'S', 'K')] } },
+  { name: 'Legs B', cfg: { menu: 'Legs B', items: [...HS, ex('ゴブレットスクワット（軽め）', 3, 75, 'F', 'K'), ex('ブルガリアンスプリット（軽め）', 3, 90, 'F', 'K'),
+    ex('ダンベル・ヒップスラスト', 3, 90, 'F', 'R'), ex('カーフレイズ', 3, 45, 'S', 'M'), ex('ホロウボディ・ホールド', 3, 60, 'S', 'F'),
+    ex('レッグレイズ', 3, 45, 'S', 'F'), ex('テイトプレス', 3, 60, 'S', 'R')] } },
 ];
+// bump when the plan's menus change: saved copies of the day menus are replaced by the new ones once
+const MENU_VER = 3;
 DEF.rest = clone(DAY_MENUS[0].cfg);
 const PRESETS = {
   interval: [
@@ -392,7 +419,14 @@ function load() {
     if (s.custom.rest) s.custom.rest = s.custom.rest.filter(p => p.cfg && Array.isArray(p.cfg.items));
     if (d.run) s.run = d.run;
     if (d.lastMenu) s.lastMenu = d.lastMenu;
+    // the plan changed: today's day menu takes the new exercises (today's progress no longer lines up, so it starts over)
+    if (d.menuVer !== MENU_VER) {
+      const fresh = DAY_MENUS.find(m => m.name === s.cfg.rest.menu);
+      if (fresh) s.cfg.rest.items = clone(fresh.cfg.items);
+      if (s.run && s.run.day === today()) delete s.run;
+    }
   }
+  s.menuVer = MENU_VER;
   return s;
 }
 const store = load();
@@ -591,7 +625,6 @@ const R = { phase: 'ready', item: 0, done: [], restStart: 0, restDur: 0, workSta
 const restCfg = () => store.cfg.rest;   // the rest timer always reads its own settings, whatever mode is open
 const items = () => restCfg().items;
 // progress is kept per day, so a reload in the middle of a workout loses nothing
-const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 function saveRun() {
   store.run = { day: today(), menu: restCfg().menu || '', item: R.item, done: R.done.slice(), finished: R.phase === 'done',
     phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur };
@@ -693,6 +726,21 @@ function restTick() {
   if (c <= 3 && R.beep !== c) { R.beep = c; play('drum'); buzz(40); beat(); }
 }
 function setLabel(i) { const it = items()[i], n = Math.min(R.done[i] + 1, it.sets || Infinity); return it.sets > 0 ? `セット ${n} / ${it.sets}` : `${n}セット目`; }
+// the two badges under the exercise name: how to treat the rest, how far to push the coming set.
+// While resting they speak about this rest and the next set; otherwise about the set at hand
+const RK_TX = { S: ['時間を守る', '0秒で始める'], F: ['時間は目安', '延ばしてよい'], K: ['時間は目安', '短くしない'] };
+function effortTx(i) {
+  const it = items()[i];
+  if (it.ef !== 'M') return { R: 'あと1〜2回で止める', K: '余力を残す', F: '崩れたら終わり' }[it.ef] || '';
+  return it.sets > 0 && R.done[i] + 1 >= it.sets ? '限界まで' : '最後は限界まで';
+}
+function guideOf(resting, nextI) {
+  const it = items()[R.item], nx = nextI >= 0 ? items()[nextI] : null, g = [];
+  if (it.rk) g.push({ c: 'rk-' + it.rk, k: '休憩', t: RK_TX[it.rk][resting ? 1 : 0] });
+  const e = resting ? nx : it;
+  if (e && e.ef) g.push({ c: 'ef-' + e.ef, k: resting ? '次' : '追い込み', t: effortTx(resting ? nextI : R.item) });
+  return g;
+}
 function viewRest() {
   syncDone();
   const it = items()[R.item], done = R.done[R.item];
@@ -702,22 +750,24 @@ function viewRest() {
   if (R.phase === 'work') {
     const rem = Math.max(0, R.workDur - (Date.now() - R.workStart) / 1000), f = rem / R.workDur;
     return { phase: 'work', label: it.name, long: true, cap: '動作', time: remain(rem), sub: setLabel(R.item), next: `0秒で休憩 ${jp(it.rest)}`,
-      fill: 1 - f, charge: 1 - f, tension: clamp((3.2 - rem) / 3.2, 0, 1), rounds };
+      fill: 1 - f, charge: 1 - f, tension: clamp((3.2 - rem) / 3.2, 0, 1), rounds, guide: guideOf(false) };
   }
   if (R.phase === 'rest') {
     const rem = Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000);
     const nextI = itemDone(R.item) ? nextOpenItem(R.item) : R.item;
     const nextTx = nextI >= 0 ? `次は ${nextI === R.item ? '' : items()[nextI].name + '　'}${setLabel(nextI)}` : '';
-    return { phase: 'rest', label: '休憩', time: remain(rem), sub: nextTx, next: `${it.name}　${done}${it.sets > 0 ? ' / ' + it.sets : ''}セット完了`, fill: rem / R.restDur, rounds };
+    return { phase: 'rest', label: '休憩', time: remain(rem), sub: nextTx, next: `${it.name}　${done}${it.sets > 0 ? ' / ' + it.sets : ''}セット完了`, fill: rem / R.restDur, rounds,
+      guide: guideOf(true, nextI) };
   }
   const lastOfItem = it.sets > 0 && done + 1 >= it.sets;
   const after = lastOfItem ? nextOpenItem(R.item) : R.item;
   const isLast = lastOfItem && after < 0;
+  const guide = guideOf(false);
   if (it.work > 0) return { phase: 'work', label: it.name, long: true, cap: '動作の時間', time: clock(it.work), sub: setLabel(R.item),
-    next: isLast ? 'タップで開始　これが最後' : `タップで開始　その後 休憩 ${jp(it.rest)}`, fill: 0, rounds };
+    next: isLast ? 'タップで開始　これが最後' : `タップで開始　その後 休憩 ${jp(it.rest)}`, fill: 0, rounds, guide };
   return { phase: 'work', label: it.name, long: true, cap: isLast ? '最後のセット' : '次の休憩', time: isLast ? '—' : clock(it.rest), sub: setLabel(R.item),
     next: isLast ? '終わったらタップで完了' : lastOfItem && after !== R.item ? `この後の休憩 ${jp(it.rest)} → 次は ${items()[after].name}` : `セットが終わったらタップ　休憩 ${jp(it.rest)}`,
-    fill: 0, rounds };
+    fill: 0, rounds, guide };
 }
 
 /* ---------- stopwatch ---------- */
@@ -839,7 +889,7 @@ function strike(final) {
 
 /* ---------- rendering ---------- */
 const app = $('#app'), stage = $('#stage'), timeEl = $('#time'), labelEl = $('#label'), kanjiEl = $('#kanji'), phaseEl = $('#phase');
-const subEl = $('#sub'), nextEl = $('#next'), capEl = $('#cap'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
+const guideEl = $('#guide'), subEl = $('#sub'), nextEl = $('#next'), capEl = $('#cap'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
 const root = document.documentElement;
 const sceneOf = phase => { const w = world(); return phase === 'rest' ? w.rest : phase === 'done' ? w.fin : w.charge; };
 function applyWorld() {
@@ -870,6 +920,14 @@ function render() {
   setText(labelEl, 'label', v.label);
   phaseEl.classList.toggle('long', !!v.long);
   setText(capEl, 'cap', v.cap || '');
+  // the row stays in the rest timer even when empty, so the numerals never jump
+  guideEl.hidden = store.mode !== 'rest';
+  const g = v.guide || [], gk = g.map(p => p.c + p.k + p.t).join('|');
+  if (last.guide !== gk) {
+    last.guide = gk;
+    guideEl.classList.toggle('off', !g.length);
+    guideEl.innerHTML = g.map(p => `<span class="pill ${p.c}"><small>${p.k}</small>${p.t}</span>`).join('');
+  }
   setText(subEl, 'sub', v.sub || '');
   setText(nextEl, 'next', v.next || '');
   const tk = v.time + '|' + v.tenth;
