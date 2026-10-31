@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
 <!--/PWA-->
-<title>ORBIT 居合</title>
+<title>ORBIT</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,23 +94,30 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .bar{display:flex;align-items:center;justify-content:space-between}
 .brand{font:500 12px/1 var(--font-ui);letter-spacing:.5em;color:var(--mist)}
 .brand b{color:var(--paper);font-weight:700}
+.progress{font:700 13px/1 var(--font-ui);letter-spacing:.04em;color:var(--paper);text-shadow:0 1px 6px #000;white-space:nowrap;font-variant-numeric:tabular-nums}
+.progress:empty{display:none}
 .icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(8,7,10,.45);display:grid;place-items:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .icon-btn svg{width:19px;height:19px}
 [hidden]{display:none!important}
 .bar-actions{display:flex;align-items:center;gap:8px}
-#undoBtn,#resetBtn{width:auto;display:flex;gap:6px;padding:0 13px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.06em}
+#undoBtn,#resetBtn{width:auto;flex:none;display:flex;align-items:center;gap:5px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.bar.running .brand{display:none}
+@media (max-width:360px){ .bar.running #resetBtn span{display:none} .bar.running #resetBtn{padding:0;width:40px;justify-content:center} }
 #undoBtn{border-color:var(--gold);color:var(--gold)}
-.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px}
+.tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:0}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:none;padding:7px 12px;border:0;border-bottom:1.5px solid transparent;background:none;color:var(--mist);font-weight:500;font-size:13px;letter-spacing:.08em;transition:color .3s,border-color .3s}
-.tab[aria-selected="true"]{color:var(--paper);border-bottom-color:var(--p)}
+.tab{flex:1 0 auto;min-height:44px;padding:0 6px;border:0;border-bottom:2px solid transparent;background:none;color:#d4cec7;font-weight:700;font-size:13px;letter-spacing:.02em;white-space:nowrap;text-shadow:0 1px 6px #000;transition:color .3s,border-color .3s}
+.tab b{font-weight:700;margin-left:4px;color:var(--gold);font-variant-numeric:tabular-nums}
+.tab b:empty{display:none}
+@media (max-width:340px){ .tab{font-size:12px;padding:0 3px} }
+.tab[aria-selected="true"]{color:#fff;border-bottom-color:var(--p)}
 
-.main{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:min(3vh,24px);gap:min(1.4vh,12px);cursor:pointer;transition:opacity .35s}
+.main{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:min(1.4vh,12px);gap:min(1.2vh,10px);cursor:pointer;transition:opacity .35s}
 #app.strike .main{opacity:0}
-.phase{font:700 15px/1.2 var(--font-ui);letter-spacing:.42em;padding-left:.42em;color:var(--paper);display:flex;align-items:center;gap:12px;max-width:100%}
+.phase{font:700 clamp(19px,5.4vw,23px)/1.22 var(--font-ui);letter-spacing:.04em;color:#fff;text-shadow:0 1px 3px #000,0 2px 14px #000;display:flex;align-items:center;justify-content:center;gap:10px;max-width:100%;min-height:2.5em;text-align:center}
 .phase .kanji{font:400 22px/1 var(--font-brush);letter-spacing:0;padding:0;color:var(--p);text-shadow:0 0 12px color-mix(in srgb,var(--p) 60%,transparent)}
-.phase .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.phase.long .tx{letter-spacing:.08em}
+.phase .tx{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:balance}
+.phase .nb{display:inline-block;font-size:.72em}
 /* how to treat this rest and how far to push this set, from the training plan; the row keeps its height so nothing jumps */
 .guide{display:flex;gap:8px;justify-content:center;min-height:30px;max-width:100%}
 .guide.off{visibility:hidden}
@@ -125,7 +132,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .pill.ef-R{border-color:var(--gold);color:var(--gold)}
 .pill.ef-K{border-color:#86c7b4;color:#c6eadf}
 .pill.ef-F{border-color:var(--paper)}
-.cap{font-size:12px;font-weight:700;letter-spacing:.4em;padding-left:.4em;color:var(--gold);text-shadow:0 1px 8px #000;margin-bottom:-.4em}
+.cap{font-size:14px;font-weight:700;letter-spacing:.2em;padding-left:.2em;color:var(--gold);text-shadow:0 1px 3px #000,0 1px 8px #000;margin-bottom:-.3em}
 .cap:empty{visibility:hidden}
 .cap:empty::before{content:"\00a0"}
 .time{font-family:var(--font-brush);font-weight:400;line-height:.86;font-size:calc(var(--U) * var(--k,.5));display:flex;align-items:flex-end;color:var(--paper);
@@ -138,8 +145,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 @keyframes beat{0%{transform:scale(1.14)}100%{transform:scale(1)}}
 .sub,.next{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 12px;border-radius:999px;background:rgba(8,7,10,.5);
   text-shadow:0 0 4px #000,0 1px 8px #000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.sub{font-size:14px;font-weight:500;letter-spacing:.16em;color:var(--paper)}
-.next{font-size:12.5px;letter-spacing:.12em;color:#d9d3cc}
+.sub{font-size:16px;font-weight:700;letter-spacing:.06em;color:#fff;background:rgba(8,7,10,.62)}
+.next{font-size:14px;font-weight:500;letter-spacing:.03em;color:#efeae3;background:rgba(8,7,10,.62)}
 /* empty lines keep their height, so the numerals and the buttons do not move between phases */
 .sub:empty,.next:empty{visibility:hidden}
 .sub:empty::before,.next:empty::before{content:"\00a0"}
@@ -169,24 +176,31 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
 /* controls on an ink strip */
 .foot{display:grid;gap:10px;padding-top:12px;position:relative}
+.foot::before{content:"";position:absolute;inset:-28px -16px -12px;background:linear-gradient(transparent,rgba(6,5,8,.84) 34%);pointer-events:none;z-index:-1}
 .controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;justify-items:center}
-.ctl{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font-size:11.5px;font-weight:500;letter-spacing:.14em;color:var(--mist);min-width:0;text-shadow:0 1px 6px #000}
-.ctl .b{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:rgba(8,7,10,.55);border:1px solid rgba(243,237,227,.5);color:var(--paper);transition:transform .15s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font-size:13px;font-weight:700;letter-spacing:.04em;color:#e8e2da;min-width:0;text-shadow:0 1px 6px #000}
+.ctl .b{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(8,7,10,.55);border:1px solid rgba(243,237,227,.5);color:var(--paper);transition:transform .15s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .ctl .b svg{width:22px;height:22px}
-.ctl .b .tx{font:700 17px var(--font-ui)}
-.ctl.main{color:var(--paper)}
+.ctl .b .tx{font:700 20px var(--font-ui)}
+.ctl.main{color:#fff}
 .ctl.main .b{width:86px;height:86px;border:2px solid var(--p);box-shadow:0 0 0 5px rgba(8,7,10,.5), 0 0 26px color-mix(in srgb,var(--p) 55%,transparent), inset 0 0 18px color-mix(in srgb,var(--p) 30%,transparent)}
 .ctl.main .b svg{width:32px;height:32px}
 .ctl:active .b{transform:scale(.93)}
-.ctl:disabled{opacity:.3;cursor:default}
-.presets{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:4px;min-height:36px}
+.ctl:disabled{visibility:hidden}
+.presets{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-height:36px}
 .presets::-webkit-scrollbar{display:none}
 .presets.off{visibility:hidden}
-.chip{flex:none;padding:8px 14px;border-radius:999px;background:rgba(8,7,10,.55);border:1px solid var(--line);font-size:12.5px;font-weight:500;letter-spacing:.06em;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.chip.on{border-color:var(--p);color:var(--gold)}
+.presets.none{display:none}
+.leads{display:flex;align-items:center;gap:6px;min-height:40px}
+.leads.off{visibility:hidden}
+.leads>span{flex:none;font-size:12.5px;font-weight:700;color:#e8e2da;text-shadow:0 1px 6px #000}
+.leads .chip{flex:1 1 auto;min-height:40px;padding:0 4px;text-align:center}
+.chip{flex:none;min-height:42px;padding:0 14px;border-radius:999px;background:rgba(8,7,10,.68);border:1px solid rgba(243,237,227,.3);font-size:13.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chip.on{border:2px solid var(--p);color:var(--gold)}
+.chip.input{border-color:var(--gold);color:var(--gold)}
 .chip.done{opacity:.5;text-decoration:line-through;text-decoration-color:rgba(243,237,227,.5)}
 .chip.on.done{opacity:.8}
-.chip.menu{border-color:var(--gold);color:var(--gold);font-weight:700}
+.chip.menu{border-color:var(--gold);color:var(--gold);font-weight:700;position:sticky;left:0;z-index:1;background:#141118}
 .menus{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .menu-btn{display:grid;gap:4px;text-align:left;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--ink);color:var(--paper)}
 .menu-btn b{font-size:17px}
@@ -198,16 +212,42 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .world-btn::before{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.75))}
 .world-btn span{position:relative}
 .world-btn.on{border:2px solid var(--gold)}
-.menu-item{display:grid;gap:8px;padding-block:10px;border-bottom:1px solid var(--line)}
+.menu-item{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding-block:12px;border-bottom:1px solid var(--line)}
 .menu-item .row{display:flex;align-items:center;gap:8px}
-.menu-item input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
-.menu-item .nums{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between}
-.menu-item .num{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mist)}
+.menu-item input{flex:1;width:0;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 16px var(--font-ui)}
+.menu-item .nums{display:grid;gap:8px}
+.menu-item .num{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;color:var(--paper)}
 .menu-item .stepper output{min-width:62px;font-size:15px}
-.menu-item .stepper button{width:40px;height:40px}
-.menu-item .prog{font-size:11px;color:var(--mist)}
+.menu-item .stepper button{width:44px;height:44px}
+.menu-item .prog{font-size:12px;color:var(--mist)}
+.mini{min-width:40px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:15px;font-weight:700}
+.mini:disabled{opacity:.3}
+.more{height:40px;border:0;background:none;color:var(--gold);font-size:13.5px;font-weight:700;text-align:left;padding:0}
+.detail{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px;border-radius:12px;background:var(--ink)}
+.detail h4{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--mist)}
+.detail .chip,.lib-form .chip{min-height:40px;padding:0 11px;font-size:13px;background:var(--ink2)}
+.detail input{flex:none;width:100%}
+.pick{display:flex;align-items:center;gap:6px;padding-block:6px;border-bottom:1px solid var(--line)}
+.pick .add{flex:1;min-width:0;min-height:52px;display:grid;gap:2px;text-align:left;background:none;border:0;padding:4px 0}
+.pick .add b{font-size:15.5px;font-weight:700}
+.pick .add span{font-size:12px;color:var(--mist)}
+.pick .add em{font-style:normal;color:var(--gold);font-weight:700}
+.search{width:100%;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 16px var(--font-ui)}
+.lib-form{display:grid;gap:12px;padding:14px;border-radius:14px;border:1px solid var(--gold);background:var(--ink)}
+.lib-form input{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink2);color:var(--paper);padding-inline:12px;font:500 16px var(--font-ui)}
+.lib-form label{display:grid;gap:6px;font-size:13px;color:var(--mist)}
+.solid{height:48px;border-radius:12px;border:0;background:var(--paper);color:var(--ink);font-size:15px;font-weight:700}
+.solid:disabled{opacity:.4}
+.danger{height:44px;border-radius:12px;border:1px solid #ff4d5e;background:none;color:#ff8a95;font-size:14px;font-weight:700}
+.pad-show{font:400 clamp(44px,14vw,64px)/1 var(--font-brush);text-align:center;font-variant-numeric:tabular-nums;color:#fff;padding-block:6px}
+.pad-show.empty{color:var(--mist)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pad button{height:60px;border-radius:14px;border:1px solid var(--line);background:var(--ink);font:700 24px var(--font-ui);display:grid;place-items:center}
+.pad button:active{background:#2a2630}
+.pad .fn{font-size:15px;color:var(--mist)}
+.sets-row{display:flex;flex-wrap:wrap;gap:6px}
 .row-save{display:grid;gap:8px}
-.row-save input{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
+.row-save input{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 16px var(--font-ui)}
 
 /* sheet */
 .scrim{position:fixed;inset:0;background:rgba(2,2,4,.6);opacity:0;pointer-events:none;transition:opacity .3s;z-index:20}
@@ -217,13 +257,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px calc(24px + env(safe-area-inset-bottom,0px));
   -webkit-user-select:auto;user-select:auto}
 .sheet.open{transform:none}
-.sheet-in{max-width:560px;margin:0 auto;display:grid;gap:22px}
+.sheet-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
 .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 0}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .sheet-head h2{margin:0;font-size:18px;font-weight:700;text-wrap:balance}
 .done-btn{padding:9px 18px;border-radius:999px;border:0;background:var(--paper);color:var(--ink);font-weight:700;font-size:14px}
-.sec{display:grid;gap:10px}
-.sec h3{margin:0;font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--mist)}
+.sec{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.sec h3{margin:0;font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--gold)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .note{margin:0;font-size:13px;line-height:1.7;color:var(--mist)}
 .field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:8px;border-bottom:1px solid var(--line)}
@@ -235,12 +275,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .stepper button svg{width:18px;height:18px}
 .stepper output{min-width:74px;text-align:center;font:500 17px var(--font-ui);font-variant-numeric:tabular-nums}
 .item{display:flex;align-items:center;gap:8px;padding-block:6px;border-bottom:1px solid var(--line)}
-.item input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 15px var(--font-ui)}
+.item input{flex:1;width:0;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ink);color:var(--paper);padding-inline:12px;font:500 16px var(--font-ui)}
 .item .stepper output{min-width:56px;font-size:15px}
 .item .stepper button{width:38px}
 .x{width:38px;height:44px;border-radius:12px;border:0;background:none;color:var(--mist);display:grid;place-items:center}
 .x svg{width:18px;height:18px}
-.wide{height:46px;border-radius:12px;border:1px dashed var(--line);background:none;color:var(--paper);font-weight:500;font-size:14px}
+.wide{min-height:46px;border-radius:12px;border:1px dashed rgba(243,237,227,.35);background:none;color:var(--paper);font-weight:700;font-size:14px;padding:6px 10px}
 .my{display:flex;align-items:center;gap:6px}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px;border-bottom:1px solid var(--line)}
 .toggle:last-child{border-bottom:0}
@@ -249,12 +289,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .sw[aria-checked="true"]{background:var(--crimson)}
 .sw[aria-checked="true"]::after{transform:translateX(22px);background:#fff}
 
-.toast{position:fixed;left:50%;top:calc(104px + env(safe-area-inset-top,0px));transform:translate(-50%,-12px);opacity:0;z-index:30;max-width:calc(100% - 32px);
-  padding:10px 16px;border-radius:999px;background:var(--ink2);border:1px solid var(--line);font-size:13px;font-weight:500;
+.toast{position:fixed;left:50%;top:calc(58px + env(safe-area-inset-top,0px));transform:translate(-50%,-12px);opacity:0;z-index:30;max-width:calc(100% - 32px);
+  width:max-content;padding:10px 16px;border-radius:14px;background:var(--ink2);border:1px solid var(--line);font-size:14px;font-weight:700;line-height:1.45;
   transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s;pointer-events:none;text-align:center}
 .toast.show{transform:translate(-50%,0);opacity:1}
 
-@media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} @supports (height:1svh){ :root{--U:min(100vw, 52svh, 560px)} } .ctl .b{width:52px;height:52px} .ctl.main .b{width:72px;height:72px} .grove{height:30px} .bamboo{height:28px} }
+@media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} @supports (height:1svh){ :root{--U:min(100vw, 52svh, 560px)} } .ctl .b{width:52px;height:52px} .ctl.main .b{width:66px;height:66px} .grove{height:26px} .bamboo{height:24px} .phase{font-size:17px;min-height:0} .sub{font-size:14px} .next{font-size:12.5px} .chip{min-height:38px} .leads{min-height:36px} .leads .chip{min-height:36px} .foot{gap:6px;padding-top:6px} .main{gap:4px;padding-top:0} }
 @media (prefers-reduced-motion:reduce){
   #app.tense,#app.strike,.time.beat,.bamboo.cur::after{animation:none!important}
   .scene{transition:opacity .4s}
@@ -276,6 +316,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   <header class="top">
     <div class="bar">
       <div class="brand"><b>O</b>RBIT</div>
+      <span class="progress" id="progress"></span>
       <div class="bar-actions">
       <button class="icon-btn" id="undoBtn" aria-label="1つ取り消す" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg><span>戻す</span></button>
       <button class="icon-btn" id="resetBtn" aria-label="リセット" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg><span>リセット</span></button>
@@ -285,7 +326,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
     <nav class="tabs" id="tabs" role="tablist" aria-label="モード"></nav>
   </header>
 
-  <main class="main" id="stage" role="button" tabindex="0" aria-label="タイマー">
+  <main class="main" id="stage" aria-label="タイマー">
     <div class="phase" id="phase"><span class="kanji" id="kanji">構</span><span class="tx" id="label"></span></div>
     <div class="guide" id="guide" hidden></div>
     <div class="cap" id="cap"></div>
@@ -299,6 +340,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 
   <footer class="foot">
     <div class="controls" id="controls"></div>
+    <div class="leads" id="leads" hidden></div>
     <div class="presets" id="presets"></div>
   </footer>
 </div>
@@ -318,24 +360,22 @@ const pad = n => String(n).padStart(2, '0');
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 
 const MODES = [
-  { id: 'rest', name: '休憩タイマー' },
+  { id: 'rest', name: '休憩' },
   { id: 'interval', name: 'インターバル' },
-  { id: 'circuit', name: 'サーキット' },
   { id: 'countdown', name: 'カウント' },
   { id: 'stopwatch', name: 'ストップウォッチ' },
 ];
 const modeName = id => MODES.find(m => m.id === id).name;
 
 const DEF = {
-  interval: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 },
+  // interval: the listed exercises in order, repeated. One exercise = plain work/rest rounds (tabata); several = a circuit.
+  // rest = between exercises; roundRest = after the last exercise of a round; sets = the whole thing repeated
+  interval: { prep: 10, rest: 10, rounds: 8, roundRest: 10, sets: 1, setRest: 60, items: [{ name: '運動', dur: 20 }] },
   // rest timer: today's exercises in order; sets 0 = no limit; work = seconds of a timed exercise (0 = none).
   // Only the rest between sets is timed. Filled from the Push A menu below
   rest: null,
-  circuit: { prep: 10, gap: 15, rounds: 3, roundRest: 60, items: [
-    { name: 'スクワット', dur: 40 }, { name: '腕立て伏せ', dur: 40 }, { name: 'ランジ', dur: 40 },
-    { name: 'プランク', dur: 40 }, { name: 'バーピー', dur: 30 } ] },
-  countdown: { min: 5, sec: 0 },
-  stopwatch: {},
+  countdown: { prep: 0, min: 5, sec: 0 },
+  stopwatch: { prep: 0 },
 };
 
 // the PPL week from the training plan (Obsidian 07_健康/10_ワークアウト/01_プラン.md "Day別メニュー"): sets, rest, and the two plan columns
@@ -380,32 +420,57 @@ const MENU_VER = 7;
 const HOLD_LEAD = 5;   // a hold starts counting this many seconds after the tap, to get into position
 const SIDE_REST = 15;  // the short rest between the right and the left side of one set
 DEF.rest = clone(DAY_MENUS[0].cfg);
+const one = (dur, rest, rounds) => ({ rest, roundRest: rest, rounds, sets: 1, setRest: 60, items: [{ name: '運動', dur }] });
 const PRESETS = {
   interval: [
-    { name: 'タバタ 20/10×8', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 1, setRest: 60 } },
-    { name: 'HIIT 40/20×10', cfg: { prep: 10, work: 40, rest: 20, rounds: 10, sets: 1, setRest: 60 } },
-    { name: '30/30×12', cfg: { prep: 10, work: 30, rest: 30, rounds: 12, sets: 1, setRest: 60 } },
-    { name: 'EMOM 10分', cfg: { prep: 10, work: 60, rest: 0, rounds: 10, sets: 1, setRest: 60 } },
-    { name: 'タバタ×3セット', cfg: { prep: 10, work: 20, rest: 10, rounds: 8, sets: 3, setRest: 60 } },
-  ],
-  rest: [...DAY_MENUS, { name: 'フリー（休憩90秒）', cfg: { menu: 'フリー', items: [ex('フリー', 0, 90)] } }],
-  circuit: [
-    { name: '全身 基本', cfg: clone(DEF.circuit) },
-    { name: '体幹', cfg: { prep: 10, gap: 10, rounds: 2, roundRest: 45, items: [
+    { name: 'タバタ 20/10×8', cfg: one(20, 10, 8) },
+    { name: 'HIIT 40/20×10', cfg: one(40, 20, 10) },
+    { name: '30/30×12', cfg: one(30, 30, 12) },
+    { name: 'EMOM 10分', cfg: one(60, 0, 10) },
+    { name: 'タバタ×3セット', cfg: { ...one(20, 10, 8), sets: 3 } },
+    { name: '全身 基本', cfg: { rest: 15, roundRest: 60, rounds: 3, sets: 1, setRest: 60, items: [
+      { name: 'スクワット', dur: 40 }, { name: '腕立て伏せ', dur: 40 }, { name: 'ランジ', dur: 40 },
+      { name: 'プランク', dur: 40 }, { name: 'バーピー', dur: 30 } ] } },
+    { name: '体幹', cfg: { rest: 10, roundRest: 45, rounds: 2, sets: 1, setRest: 60, items: [
       { name: 'プランク', dur: 45 }, { name: 'サイドプランク 右', dur: 30 }, { name: 'サイドプランク 左', dur: 30 },
       { name: 'マウンテンクライマー', dur: 30 }, { name: 'デッドバグ', dur: 40 }, { name: 'ヒップリフト', dur: 40 } ] } },
   ],
+  rest: [...DAY_MENUS, { name: 'フリー（休憩90秒）', cfg: { menu: 'フリー', items: [ex('フリー', 0, 90)] } }],
   countdown: [1, 3, 5, 10, 20].map(m => ({ name: m + '分', cfg: { min: m, sec: 0 } })),
   stopwatch: [],
 };
+const LEADS = [0, 3, 5, 10];   // seconds before a timer starts, offered on the idle screen
+
+/* ---------- exercise library: every exercise once, with its usual sets, rest and targets; menus are built by picking from it ---------- */
+const PARTS = ['胸', '肩', '背中', '腕', '前腕', '脚', '腹', '技', '全身', 'その他'];
+function guessPart(n) {
+  if (/逆立ち|プランシェ|タック/.test(n)) return '技';
+  if (/リスト|リバースカール|ゾットマン|スーツケース/.test(n)) return '前腕';
+  if (/ホロウ|レッグレイズ|プランク|デッドバグ|クライマー/.test(n)) return '腹';
+  if (/スクワット|スプリット|カーフ|ヒップ|RDL|レッグカール|ランジ/.test(n)) return '脚';
+  if (/カール|クローズ|ナロー|エクステンション|テイト/.test(n)) return '腕';
+  if (/ロー|プルオーバー/.test(n)) return '背中';
+  if (/レイズ|ショルダー/.test(n)) return '肩';
+  if (/ベンチ|プレス|フライ|腕立て|プッシュアップ/.test(n)) return '胸';
+  if (/バーピー/.test(n)) return '全身';
+  return 'その他';
+}
+const toLib = it => ({ name: it.name, part: it.part || guessPart(it.name), sets: it.sets == null ? 3 : it.sets, rest: it.rest == null ? 90 : it.rest, work: it.work || 0,
+  rk: it.rk || '', ef: it.ef || '', reps: it.reps || '', hold: !!it.hold, hmin: it.hmin || 0, hmax: it.hmax || 0, sides: !!it.sides, dur: it.dur || 40 });
+function seedLibrary(lib, gone) {
+  const has = new Set(lib.map(l => l.name)), add = it => { if (!has.has(it.name) && !gone.includes(it.name)) { has.add(it.name); lib.push(toLib(it)); } };
+  DAY_MENUS.forEach(m => m.cfg.items.forEach(add));
+  PRESETS.interval.forEach(p => p.cfg.items.forEach(it => { if (p.cfg.items.length > 1) add({ name: it.name, dur: it.dur, sets: 3, rest: 60 }); }));
+  return lib;
+}
 
 // [key, label, min, max, step, hint, kind]
-const FIELDS = {
-  interval: [['prep', '準備', 0, 60, 5], ['work', '運動', 5, 600, 5], ['rest', '休憩', 0, 600, 5, '0 にすると休憩なし'],
-    ['rounds', 'ラウンド数', 1, 30, 1, null, 'n'], ['sets', 'セット数', 1, 10, 1, null, 'n'], ['setRest', 'セット間の休憩', 0, 600, 15]],
-  circuit: [['prep', '準備', 0, 60, 5], ['gap', '種目間の休憩', 0, 120, 5], ['rounds', 'ラウンド数', 1, 10, 1, null, 'n'], ['roundRest', 'ラウンド間の休憩', 0, 600, 15]],
-  countdown: [['min', '分', 0, 180, 1, null, 'n'], ['sec', '秒', 0, 55, 5, null, 'n']],
-};
+function fieldsOf(c) {
+  const multi = c.items.length > 1;
+  return [...(multi ? [['rest', '種目間の休憩', 0, 120, 5]] : [['roundRest', '休憩', 0, 600, 5, '0 にすると休憩なし']]),
+    ['rounds', 'ラウンド数', 1, 30, 1, null, 'n'], ...(multi ? [['roundRest', 'ラウンド間の休憩', 0, 600, 15]] : []),
+    ['sets', 'セット数', 1, 10, 1, '全体を何回くり返すか', 'n'], ['setRest', 'セット間の休憩', 0, 600, 15]];
+}
 
 const ICON = {
   play: '<svg viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="currentColor"/></svg>',
@@ -422,10 +487,21 @@ const ICON = {
 
 /* ---------- storage ---------- */
 function load() {
-  const s = { mode: 'rest', cfg: clone(DEF), prefs: { sound: true, voice: false, vibrate: true }, custom: {} };
+  const s = { mode: 'rest', cfg: clone(DEF), prefs: { sound: true, voice: false, vibrate: true }, custom: {}, recent: [], libGone: [] };
   let d = null;
   try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (d && typeof d === 'object') {
+    // interval and circuit became one mode: turn the old settings and saved presets into the new shape
+    if (d.mode === 'circuit') d.mode = 'interval';
+    const fromOld = o => o.work != null ? { prep: o.prep, rest: o.rest, roundRest: o.rest, rounds: o.rounds, sets: o.sets || 1, setRest: o.setRest == null ? 60 : o.setRest, items: [{ name: '運動', dur: o.work }] }
+      : o.gap != null ? { prep: o.prep, rest: o.gap, roundRest: o.roundRest, rounds: o.rounds, sets: 1, setRest: 60, items: o.items } : o;
+    if (d.cfg) { if (d.cfg.interval) d.cfg.interval = fromOld(d.cfg.interval); delete d.cfg.circuit; }
+    if (d.custom) {
+      d.custom.interval = [...(d.custom.interval || []), ...(d.custom.circuit || [])].map(p => ({ name: p.name, cfg: fromOld(p.cfg) }));
+      delete d.custom.circuit;
+      // a saved menu must keep its own name, not the name of the menu it was made from
+      (d.custom.rest || []).forEach(p => { if (p.cfg) p.cfg.menu = p.name; });
+    }
     if (MODES.some(m => m.id === d.mode)) s.mode = d.mode;
     if (d.cfg) for (const k in DEF) if (d.cfg[k]) s.cfg[k] = Object.assign(clone(DEF[k]), d.cfg[k]);
     if (d.prefs) Object.assign(s.prefs, d.prefs);
@@ -440,15 +516,22 @@ function load() {
     if (d.run) s.run = d.run;
     if (d.lastMenu) s.lastMenu = d.lastMenu;
     if (d.best && typeof d.best === 'object') s.best = d.best;
+    if (d.menus && typeof d.menus === 'object') s.menus = d.menus;
+    if (Array.isArray(d.library)) s.library = d.library;
+    if (Array.isArray(d.libGone)) s.libGone = d.libGone;
+    if (Array.isArray(d.recent)) s.recent = d.recent;
     // the plan changed: today's day menu takes the new exercises (today's progress no longer lines up, so it starts over)
     if (d.menuVer !== MENU_VER) {
       const fresh = DAY_MENUS.find(m => m.name === s.cfg.rest.menu);
       if (fresh) s.cfg.rest.items = clone(fresh.cfg.items);
+      // the edits kept for the plan's day menus were made on the old plan
+      if (s.menus) DAY_MENUS.forEach(m => { delete s.menus[m.name]; });
       if (s.run && s.run.day === today()) delete s.run;
     }
   }
   s.menuVer = MENU_VER;
   s.best = s.best || {};   // the longest hold per exercise name, in seconds
+  s.library = seedLibrary(s.library || [], s.libGone);
   return s;
 }
 const store = load();
@@ -469,8 +552,7 @@ function clock(sec) {
 function remain(sec) { const c = Math.max(0, Math.ceil(sec - 1e-6)); return c < 60 ? String(c) : clock(c); }
 function jp(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m ? (s ? `${m}分${s}秒` : `${m}分`) : `${s}秒`; }
 function summary(mode, c) {
-  if (mode === 'interval') return `${c.work}/${c.rest} ×${c.rounds}` + (c.sets > 1 ? ` ×${c.sets}セット` : '');
-  if (mode === 'circuit') return `${c.items.length}種目 ×${c.rounds}`;
+  if (mode === 'interval') return (c.items.length > 1 ? `${c.items.length}種目 ×${c.rounds}` : `${c.items[0].dur}/${c.roundRest} ×${c.rounds}`) + (c.sets > 1 ? ` ×${c.sets}セット` : '');
   if (mode === 'countdown') return jp(c.min * 60 + c.sec);
   if (mode === 'rest') return c.items.slice(0, 2).map(it => it.name).join('・') + (c.items.length > 2 ? ` ほか${c.items.length - 2}種目` : '');
   return '';
@@ -552,29 +634,23 @@ async function wake(on) {
 function buildSegs(mode, c) {
   const s = [];
   if (mode === 'interval') {
-    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '準備', sub: `${c.rounds}ラウンド` + (c.sets > 1 ? ` × ${c.sets}セット` : ''), orbs: c.rounds, lit: 0, orb: 0, speak: '構え' });
+    const n = c.items.length, multi = n > 1, orbs = multi ? n : c.rounds;
+    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '開始まで', sub: (multi ? `${n}種目 × ` : '') + `${c.rounds}ラウンド` + (c.sets > 1 ? ` × ${c.sets}セット` : ''), orbs, lit: 0, orb: 0, speak: multi ? '最初は' + c.items[0].name : '構え' });
     for (let st = 0; st < c.sets; st++) {
       for (let r = 0; r < c.rounds; r++) {
-        const sub = `ラウンド ${r + 1} / ${c.rounds}` + (c.sets > 1 ? `　セット ${st + 1} / ${c.sets}` : '');
-        const last = st === c.sets - 1 && r === c.rounds - 1;
-        s.push({ type: 'work', dur: c.work, label: last ? 'ラスト' : '運動', sub, orbs: c.rounds, lit: r, orb: r, speak: last ? 'ラスト' : '' });
-        if (c.rest > 0 && r < c.rounds - 1) s.push({ type: 'rest', dur: c.rest, label: '休憩', sub, orbs: c.rounds, lit: r + 1, orb: r + 1, speak: '' });
+        c.items.forEach((it, i) => {
+          const cur = multi ? i : r, sub = (multi ? `種目 ${i + 1} / ${n}　` : '') + `ラウンド ${r + 1} / ${c.rounds}` + (c.sets > 1 ? `　セット ${st + 1} / ${c.sets}` : '');
+          const last = st === c.sets - 1 && r === c.rounds - 1 && i === n - 1;
+          s.push({ type: 'work', dur: it.dur, label: multi ? it.name || `種目${i + 1}` : last ? 'ラスト' : it.name || '運動', sub, orbs, lit: cur, orb: cur, speak: multi ? it.name : last ? 'ラスト' : '', long: multi });
+          if (i < n - 1) { if (c.rest > 0) s.push({ type: 'rest', dur: c.rest, label: '休憩', sub, orbs, lit: i + 1, orb: i + 1, speak: '次は' + c.items[i + 1].name }); }
+          else if (r < c.rounds - 1 && c.roundRest > 0) s.push({ type: 'rest', dur: c.roundRest, label: multi ? 'ラウンド間休憩' : '休憩', sub, orbs, lit: multi ? n : r + 1, orb: multi ? -1 : r + 1, speak: multi ? 'ラウンド間の休憩' : '' });
+        });
       }
-      if (st < c.sets - 1 && c.setRest > 0) s.push({ type: 'rest', dur: c.setRest, label: 'セット間休憩', sub: `セット ${st + 1} / ${c.sets} 完了`, orbs: c.rounds, lit: c.rounds, orb: -1, speak: 'セット間の休憩' });
-    }
-  } else if (mode === 'circuit') {
-    const n = c.items.length;
-    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '準備', sub: `${n}種目 × ${c.rounds}ラウンド`, orbs: n, lit: 0, orb: 0, speak: '最初は' + c.items[0].name });
-    for (let r = 0; r < c.rounds; r++) {
-      c.items.forEach((it, i) => {
-        const sub = `種目 ${i + 1} / ${n}　ラウンド ${r + 1} / ${c.rounds}`;
-        s.push({ type: 'work', dur: it.dur, label: it.name || `種目${i + 1}`, sub, orbs: n, lit: i, orb: i, speak: it.name, long: true });
-        if (c.gap > 0 && i < n - 1) s.push({ type: 'rest', dur: c.gap, label: '休憩', sub, orbs: n, lit: i + 1, orb: i + 1, speak: '次は' + c.items[i + 1].name });
-      });
-      if (r < c.rounds - 1 && c.roundRest > 0) s.push({ type: 'rest', dur: c.roundRest, label: 'ラウンド間休憩', sub: `ラウンド ${r + 1} / ${c.rounds} 完了`, orbs: n, lit: n, orb: -1, speak: 'ラウンド間の休憩' });
+      if (st < c.sets - 1 && c.setRest > 0) s.push({ type: 'rest', dur: c.setRest, label: 'セット間休憩', sub: `セット ${st + 1} / ${c.sets} 完了`, orbs, lit: orbs, orb: -1, speak: 'セット間の休憩' });
     }
   } else if (mode === 'countdown') {
-    s.push({ type: 'work', dur: Math.max(5, c.min * 60 + c.sec), label: '残り', sub: '', orbs: 0, lit: 0, orb: -1, speak: '' });
+    if (c.prep) s.push({ type: 'prep', dur: c.prep, label: '開始まで', sub: '', orbs: 0, lit: 0, orb: -1, speak: '' });
+    s.push({ type: 'work', dur: Math.max(1, c.min * 60 + c.sec), label: '残り', sub: '', orbs: 0, lit: 0, orb: -1, speak: '' });
   }
   return s;
 }
@@ -618,20 +694,20 @@ function segTick() {
     enter(now - T.segStart > 1500, prev); // quiet while catching up after the app was in the background
   }
   const s = T.segs[T.idx], c = Math.ceil(s.dur - (now - T.segStart) / 1000);
-  if (c >= 1 && c <= 3 && s.dur > 3) {
+  if (c >= 1 && c <= 3 && (s.dur > 3 || s.type === 'prep')) {
     const key = T.idx + ':' + c;
     if (T.beep !== key) { T.beep = key; play(c === 1 && s.type === 'work' ? 'bigdrum' : 'drum'); buzz(40); beat(); }
   }
 }
 function viewSeg() {
   const segs = T.segs, c = cfg();
-  const total = segs.reduce((a, s) => a + s.dur, 0);
+  const total = segs.reduce((a, s) => a + (s.type === 'prep' ? 0 : s.dur), 0);
   const first = segs.find(s => s.type !== 'prep') || segs[0];
   if (T.status === 'idle') {
-    let sub = '';
-    if (store.mode === 'interval') sub = `運動${jp(c.work)}　休憩${jp(c.rest)}　× ${c.rounds}` + (c.sets > 1 ? ` × ${c.sets}` : '');
-    else if (store.mode === 'circuit') sub = `${c.items.length}種目 × ${c.rounds}ラウンド`;
-    return { phase: 'idle', label: modeName(store.mode), time: clock(total), sub, next: 'タップで構える', fill: 0, rounds: { n: first.orbs, lit: 0, cur: -1 } };
+    let sub = '', next = 'タップでスタート';
+    if (store.mode === 'interval') sub = (c.items.length > 1 ? `${c.items.length}種目 × ${c.rounds}ラウンド` : `運動${jp(c.items[0].dur)}　休憩${jp(c.roundRest)}　× ${c.rounds}`) + (c.sets > 1 ? ` × ${c.sets}` : '');
+    else next = '数字を押すと時間を変えられます';
+    return { phase: 'idle', label: modeName(store.mode), time: clock(total), sub, next, fill: 0, rounds: { n: first.orbs, lit: 0, cur: -1 } };
   }
   if (T.status === 'done') return { phase: 'done', label: '完了', time: clock(total), sub: world().words, next: `合計 ${jp(total)}`, fill: 1, rounds: { n: first.orbs, lit: first.orbs, cur: -1 } };
   const s = segs[T.idx], now = T.status === 'paused' ? T.pausedAt : Date.now();
@@ -650,13 +726,13 @@ function viewSeg() {
    phase 'ready': training, nothing counts; the screen shows the rest that the next tap starts.
    phase 'rest': counting down. When it ends, the timer is set to the next rest (next set, or the next exercise). */
 // phase 'hold': a held position (planche, handstand) counts up from the tap; holds[i] keeps today's seconds per exercise
-const R = { phase: 'ready', item: 0, done: [], holds: [], restStart: 0, restDur: 0, workStart: 0, workDur: 0, holdStart: 0, side: 0, sideRest: false, beep: '', started: false };
+const R = { phase: 'ready', item: 0, done: [], holds: [], restStart: 0, restDur: 0, workStart: 0, workDur: 0, holdStart: 0, side: 0, sideRest: false, beep: '', started: false, startedAt: 0, endedAt: 0 };
 const restCfg = () => store.cfg.rest;   // the rest timer always reads its own settings, whatever mode is open
 const items = () => restCfg().items;
 // progress is kept per day, so a reload in the middle of a workout loses nothing
 function saveRun() {
   store.run = { day: today(), menu: restCfg().menu || '', item: R.item, done: R.done.slice(), holds: R.holds.map(a => a.slice()), finished: R.phase === 'done',
-    phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, side: R.side, sideRest: R.sideRest };
+    phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, side: R.side, sideRest: R.sideRest, startedAt: R.startedAt, endedAt: R.endedAt };
   save();
 }
 // undo: each step the user takes is kept, so a mistaken tap can be taken back one at a time
@@ -688,10 +764,10 @@ function nextOpenItem(from) {
   for (let k = 1; k <= n; k++) { const i = (from + k) % n; if (!itemDone(i)) return i; }
   return -1;
 }
-function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.holds = []; R.side = 0; R.sideRest = false; R.started = false; history.length = 0; syncDone(); wake(false); saveRun(); }
+function resetRest() { R.phase = 'ready'; R.item = 0; R.done = []; R.holds = []; R.side = 0; R.sideRest = false; R.started = false; R.startedAt = 0; R.endedAt = 0; history.length = 0; syncDone(); wake(anyActive()); saveRun(); }
 // a timed exercise (plank etc.): the tap starts its countdown; zero is the cut and the rest follows
 function startWork() {
-  audio(); R.phase = 'work'; R.started = true; R.workStart = Date.now(); R.workDur = items()[R.item].work; R.beep = '';
+  audio(); R.phase = 'work'; R.started = true; R.startedAt = R.startedAt || Date.now(); R.workStart = Date.now(); R.workDur = items()[R.item].work; R.beep = '';
   cue('start'); buzz([60, 40, 60]); wake(true); saveRun();
 }
 // a hold: the tap gives HOLD_LEAD seconds to get into position (drums on the last 3), then counts up; the chime sounds at the
@@ -701,7 +777,7 @@ const holdSecs = () => (Date.now() - R.holdStart) / 1000 - HOLD_LEAD;
 const sideTx = () => R.side ? '左' : '右';
 const bestKey = it => it.sides ? `${it.name}（${sideTx()}）` : it.name;
 function beginHold() {
-  audio(); remember(); R.phase = 'hold'; R.started = true; R.holdStart = Date.now(); R.beep = '';
+  audio(); remember(); R.phase = 'hold'; R.started = true; R.startedAt = R.startedAt || Date.now(); R.holdStart = Date.now(); R.beep = '';
   buzz(40); wake(true); saveRun();
 }
 function endHold() {
@@ -726,12 +802,12 @@ function completeSet(byHand = true) {
   audio(); syncDone();
   if (byHand) remember();
   if (R.phase === 'ready' && items()[R.item].work > 0) { startWork(); return; }
-  R.done[R.item]++; R.started = true;
+  R.done[R.item]++; R.started = true; R.startedAt = R.startedAt || Date.now();
   if (byHand && undoHints < 2) { undoHints++; setTimeout(() => toast('間違えた時は、右上の「戻す」で取り消せます'), 1400); }
   const finished = allDone();
   strike(finished);
   if (finished) {
-    R.phase = 'done'; saveRun();
+    R.phase = 'done'; R.endedAt = Date.now(); saveRun();
     setTimeout(() => { play('gong'); say('全種目完了。' + world().words); }, 900); buzz([200, 100, 200, 100, 500]); wake(false);
     return;
   }
@@ -804,7 +880,7 @@ function restTick() {
 }
 function setLabel(i) {
   const it = items()[i], n = Math.min(R.done[i] + 1, it.sets || Infinity);
-  const reps = it.sides && i === R.item ? `${sideTx()}・${it.reps.replace('（左右）', '')}` : it.reps;
+  const reps = it.sides && i === R.item ? `${sideTx()}・${(it.reps || '').replace('（左右）', '')}` : it.reps;
   return (it.sets > 0 ? `セット ${n} / ${it.sets}` : `${n}セット目`) + (reps ? `・${reps}` : '');
 }
 // what a finished hold left: the last seconds (both sides for a per-side hold)
@@ -837,7 +913,7 @@ function viewRest() {
   const it = items()[R.item], done = R.done[R.item];
   const rounds = it.sets > 0 ? { n: it.sets, lit: done, cur: done } : { n: Math.min(12, done + 1), lit: done, cur: done };
   const total = R.done.reduce((a, b) => a + b, 0);
-  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(total), sub: `${items().length}種目　${total}セット`, next: world().words, fill: 1, rounds: { n: rounds.n, lit: rounds.n, cur: -1 } };
+  if (R.phase === 'done') return { phase: 'done', label: '完了', time: String(total), sub: `${items().length}種目　${total}セット`, next: R.startedAt && R.endedAt ? `${hm(R.startedAt)} 〜 ${hm(R.endedAt)}　${Math.round((R.endedAt - R.startedAt) / 60000)}分` : world().words, fill: 1, rounds: { n: rounds.n, lit: rounds.n, cur: -1 } };
   if (R.phase === 'hold') {
     const s = holdSecs(), lead = s < 0, top = it.hmax || 60;
     return { phase: 'work', label: it.name, long: true, cap: lead ? '構える' : '保持', time: clock(lead ? Math.ceil(-s) : s), sub: setLabel(R.item),
@@ -877,13 +953,28 @@ function viewRest() {
 }
 
 /* ---------- stopwatch ---------- */
-const W = { status: 'idle', start: 0, acc: 0, laps: [] };
+const hm = ms => { const d = new Date(ms); return `${d.getHours()}:${pad(d.getMinutes())}`; };
+const W = { status: 'idle', start: 0, acc: 0, laps: [], leadEnd: 0, beep: 0 };
 const swEl = () => W.acc + (W.status === 'running' ? Date.now() - W.start : 0);
-function swStart() { audio(); W.start = Date.now(); W.status = 'running'; cue('start'); wake(true); }
-function swPause() { W.acc += Date.now() - W.start; W.status = 'paused'; wake(false); }
-function swReset() { W.status = 'idle'; W.acc = 0; W.laps = []; }
+// from idle the chosen lead time counts down first (0 = at once); resuming from a pause never waits
+function swStart() {
+  audio(); wake(true);
+  const lead = W.status === 'idle' ? store.cfg.stopwatch.prep : 0;
+  if (lead > 0) { W.status = 'lead'; W.leadEnd = Date.now() + lead * 1000; W.beep = 0; play('bell'); return; }
+  W.start = Date.now(); W.status = 'running'; cue('start');
+}
+function swTick() {
+  if (W.status !== 'lead') return;
+  const rem = (W.leadEnd - Date.now()) / 1000;
+  if (rem <= 0) { W.start = W.leadEnd; W.status = 'running'; cue('start'); buzz([60, 40, 60]); return; }
+  const c = Math.ceil(rem);
+  if (c <= 3 && W.beep !== c) { W.beep = c; play('drum'); buzz(40); beat(); }
+}
+function swPause() { W.acc += Date.now() - W.start; W.status = 'paused'; wake(anyActive()); }
+function swReset() { W.status = 'idle'; W.acc = 0; W.laps = []; wake(anyActive()); }
 function swLap() { const e = swEl(), prev = W.laps.length ? W.laps[W.laps.length - 1].at : 0; W.laps.push({ at: e, d: e - prev }); play('lap'); buzz(30); }
 function viewSW() {
+  if (W.status === 'lead') { const rem = Math.max(0, (W.leadEnd - Date.now()) / 1000); return { phase: 'prep', label: '開始まで', time: clock(Math.ceil(rem - 1e-6)), next: '0秒で計測を始めます', fill: 0, rounds: { n: 0, lit: 0, cur: -1 } }; }
   const e = swEl(), n = W.laps.length;
   return { phase: W.status === 'running' ? 'work' : 'idle', label: W.status === 'idle' ? 'ストップウォッチ' : W.status === 'paused' ? '一時停止中' : '計測中',
     time: clock(e / 1000), tenth: Math.floor(e % 1000 / 100), sub: n ? `ラップ ${n}` : '', next: W.status === 'idle' ? 'タップでスタート' : '',
@@ -891,24 +982,19 @@ function viewSW() {
 }
 
 /* ---------- mode-level dispatch ---------- */
-function isActive() {
-  const m = store.mode;
-  if (m === 'rest') return R.started && R.phase !== 'done';
-  if (m === 'stopwatch') return W.status === 'running';
-  return T.status === 'running';
-}
 function busy() {
   const m = store.mode;
   if (m === 'rest') return R.started && R.phase !== 'done';
   if (m === 'stopwatch') return W.status !== 'idle';
   return T.status === 'running' || T.status === 'paused';
 }
-function resetAll() { rebuild(); resetRest(); swReset(); wake(false); }
+// anything still counting, on any tab: the screen stays awake for it
+function anyActive() { return R.phase === 'rest' || R.phase === 'work' || R.phase === 'hold' || W.status === 'running' || W.status === 'lead' || T.status === 'running'; }
 // reset only the current mode (the top-bar button and the running timers' reset)
 function resetMode() {
   if (striking) { clearTimeout(striking); striking = 0; app.classList.remove('strike'); last.scene = ''; }
   if (store.mode === 'rest') resetRest(); else if (store.mode === 'stopwatch') swReset(); else rebuild();
-  wake(false);
+  wake(anyActive());
 }
 // resetting a running timer takes a second tap within 3 seconds, so a stray tap cannot wipe a workout
 let resetArmed = 0;
@@ -917,7 +1003,8 @@ function confirmReset(fn) {
   else { resetArmed = Date.now(); toast('もう一度押すとリセットします'); }
 }
 function view() { return store.mode === 'rest' ? viewRest() : store.mode === 'stopwatch' ? viewSW() : viewSeg(); }
-function logic() { if (store.mode === 'rest') restTick(); else if (store.mode !== 'stopwatch') segTick(); }
+// the rest timer and the stopwatch keep counting while another tab is open
+function logic() { restTick(); swTick(); if (store.mode !== 'rest' && store.mode !== 'stopwatch') segTick(); }
 
 function controls() {
   const m = store.mode, A = f => () => { f(); render(); };
@@ -933,11 +1020,12 @@ function controls() {
     return { ...lr, c: items()[R.item].work > 0 ? { ic: 'play', t: `${jp(items()[R.item].work)} スタート`, fn: A(completeSet) } : { ic: 'cut', t: 'セット完了', fn: A(completeSet) } };
   }
   if (m === 'stopwatch') {
+    if (W.status === 'lead') return { l: { ic: 'reset', t: '', dis: true }, c: { ic: 'x', t: '中止', fn: A(swReset), noStage: true }, r: { ic: 'lap', t: '', dis: true } };
     if (W.status === 'running') return { l: { ic: 'reset', t: 'リセット', fn: A(() => confirmReset(resetMode)) }, c: { ic: 'pause', t: '一時停止', fn: A(swPause) }, r: { ic: 'lap', t: 'ラップ', fn: A(swLap) } };
     return { l: { ic: 'reset', t: 'リセット', fn: A(swReset), dis: W.status === 'idle' }, c: { ic: 'play', t: W.status === 'paused' ? '再開' : 'スタート', fn: A(swStart) }, r: { ic: 'lap', t: 'ラップ', dis: true } };
   }
   if (T.status === 'running') return { l: { ic: 'reset', t: 'リセット', fn: A(() => confirmReset(resetMode)) }, c: { ic: 'pause', t: '一時停止', fn: A(segPause) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
-  if (T.status === 'paused') return { l: { ic: 'reset', t: 'リセット', fn: A(() => { rebuild(); wake(false); }) }, c: { ic: 'play', t: '再開', fn: A(segStartRun) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
+  if (T.status === 'paused') return { l: { ic: 'reset', t: 'リセット', fn: A(() => { rebuild(); wake(anyActive()); }) }, c: { ic: 'play', t: '再開', fn: A(segStartRun) }, r: { ic: 'skip', t: 'スキップ', fn: A(segSkip) } };
   if (T.status === 'done') return { l: { ic: 'reset', t: 'リセット', fn: A(rebuild) }, c: { ic: 'reset', t: 'もう一度', fn: A(segStartRun), noStage: true }, r: gear };
   return { l: { ic: 'reset', t: 'リセット', dis: true }, c: { ic: 'play', t: 'スタート', fn: A(segStartRun) }, r: gear };
 }
@@ -998,7 +1086,7 @@ function strike(final) {
 
 /* ---------- rendering ---------- */
 const app = $('#app'), stage = $('#stage'), timeEl = $('#time'), labelEl = $('#label'), kanjiEl = $('#kanji'), phaseEl = $('#phase');
-const guideEl = $('#guide'), subEl = $('#sub'), nextEl = $('#next'), capEl = $('#cap'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
+const leadsEl = $('#leads'), progressEl = $('#progress'), guideEl = $('#guide'), subEl = $('#sub'), nextEl = $('#next'), capEl = $('#cap'), katana = $('#katana'), grove = $('#grove'), ctlEl = $('#controls'), presetsEl = $('#presets'), lapsEl = $('#laps');
 const root = document.documentElement;
 const sceneOf = phase => { const w = world(); return phase === 'rest' ? w.rest : phase === 'done' ? w.fin : w.charge; };
 function applyWorld() {
@@ -1026,8 +1114,8 @@ function render() {
   if (app.dataset.phase !== v.phase) { app.dataset.phase = v.phase; root.dataset.phase = v.phase; }
   if (!striking) showScene(sceneOf(v.phase), false);
   setText(kanjiEl, 'kanji', world().kanji[v.phase] || world().kanji.work);
-  setText(labelEl, 'label', v.label);
-  phaseEl.classList.toggle('long', !!v.long);
+  // a bracket in a name stays together on one line
+  if (last.label !== v.label) { last.label = v.label; labelEl.innerHTML = esc(v.label).replace(/（[^）]*）/, m => `<span class="nb">${m}</span>`); }
   setText(capEl, 'cap', v.cap || '');
   // the row stays in the rest timer even when empty, so the numerals never jump
   guideEl.hidden = store.mode !== 'rest';
@@ -1044,7 +1132,7 @@ function render() {
     last.time = tk;
     timeEl.innerHTML = timeHTML(v.time, v.tenth);
     const len = v.time.length + (v.tenth != null ? 1.4 : 0);
-    timeEl.style.setProperty('--k', len <= 2 ? .52 : len <= 4 ? .34 : len <= 5.4 ? .27 : .21);
+    timeEl.style.setProperty('--k', len <= 2 ? .52 : len <= 4 ? .34 : len <= 5.4 ? .27 : len <= 7.4 ? .19 : .15);
   }
   katana.style.setProperty('--fill', clamp(v.fill || 0, 0, 1).toFixed(3));
   const tension = v.tension || 0;
@@ -1053,6 +1141,15 @@ function render() {
   app.style.setProperty('--tension', tension.toFixed(3));
   app.classList.toggle('tense', tension > 0.05 && !striking);
   renderGrove(v.rounds);
+  const doneItems = items().filter((_, i) => itemDone(i)).length;
+  document.querySelector('.bar').classList.toggle('running', store.mode === 'rest' && !!R.startedAt && R.phase !== 'done');
+  setText(progressEl, 'progress', store.mode === 'rest' && R.startedAt && R.phase !== 'done' ? `種目 ${doneItems + (R.phase === 'done' ? 0 : 1)}/${items().length}・${Math.floor((Date.now() - R.startedAt) / 60000)}分` : '');
+  // what is still counting on another tab
+  const restBadge = store.mode !== 'rest' && R.phase === 'rest' ? clock(Math.ceil(Math.max(0, R.restDur - (Date.now() - R.restStart) / 1000))) : '';
+  const swBadge = store.mode !== 'stopwatch' && W.status === 'running' ? clock(swEl() / 1000) : '';
+  const bR = $('#tabs [data-b=rest]'), bS = $('#tabs [data-b=stopwatch]');
+  if (bR && bR.textContent !== restBadge) bR.textContent = restBadge;
+  if (bS && bS.textContent !== swBadge) bS.textContent = swBadge;
   $('#undoBtn').hidden = !(store.mode === 'rest' && history.length);
   $('#resetBtn').hidden = !(store.mode === 'rest' ? R.started || R.phase === 'done' : busy() || T.status === 'done');
   fx.charge = v.charge || 0; fx.tension = tension; fx.phase = v.phase;
@@ -1071,7 +1168,9 @@ function render() {
     const sig = items().map((it, i) => `${it.name}${it.sets}:${R.done[i]}`).join('|') + `#${R.item}${R.phase}`;
     if (last.chips !== sig) { last.chips = sig; renderPresets(); }
     presetsEl.classList.remove('off');
-  } else presetsEl.classList.toggle('off', busy() || PRESETS[store.mode].length + (store.custom[store.mode] || []).length === 0);
+  } else presetsEl.classList.toggle('off', busy());
+  presetsEl.classList.toggle('none', store.mode === 'stopwatch');
+  renderLeads();
   if (store.mode === 'stopwatch') {
     lapsEl.hidden = W.laps.length === 0;
     if (last.laps !== W.laps.length) {
@@ -1183,16 +1282,30 @@ addEventListener('resize', sizeCanvas); sizeCanvas();
 /* ---------- tabs & presets ---------- */
 let pendingMode = null, pendingT = 0;
 function renderTabs() {
-  $('#tabs').innerHTML = MODES.map(m => `<button class="tab" role="tab" data-m="${m.id}" aria-selected="${m.id === store.mode}">${m.name}</button>`).join('');
+  $('#tabs').innerHTML = MODES.map(m => `<button class="tab" role="tab" data-m="${m.id}" aria-selected="${m.id === store.mode}">${m.name}<b data-b="${m.id}"></b></button>`).join('');
   const cur = $('#tabs [aria-selected="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 function switchMode(id) {
   if (id === store.mode) return;
-  if (busy() && pendingMode !== id) {
+  // only a running interval or countdown stops when the tab changes; the rest timer and the stopwatch keep counting
+  const segBusy = store.mode !== 'rest' && store.mode !== 'stopwatch' && (T.status === 'running' || T.status === 'paused');
+  if (segBusy && pendingMode !== id) {
     pendingMode = id; clearTimeout(pendingT); pendingT = setTimeout(() => { pendingMode = null; }, 2600);
-    toast('もう一度タップで切り替え（今のタイマーはリセット）'); return;
+    toast('もう一度押すと切り替えます（今のタイマーは止まります）'); return;
   }
-  pendingMode = null; store.mode = id; save(); resetAll(); renderTabs(); renderPresets(); render();
+  pendingMode = null; store.mode = id; save(); rebuild(); wake(anyActive()); renderTabs(); renderPresets(); render();
+}
+// the "time before it starts" row on the idle screen of the three timers that have one
+function renderLeads() {
+  const m = store.mode, show = m !== 'rest';
+  leadsEl.hidden = !show;
+  if (!show) return;
+  leadsEl.classList.toggle('off', busy());
+  const v = store.cfg[m].prep || 0, other = !LEADS.includes(v), sig = m + ':' + v;
+  if (last.leads === sig) return;
+  last.leads = sig;
+  leadsEl.innerHTML = '<span>開始まで</span>' + LEADS.map(s => `<button class="chip${s === v ? ' on' : ''}" data-lead="${s}">${s}秒</button>`).join('') +
+    `<button class="chip${other ? ' on' : ''}" data-act="leadpad">${other ? v + '秒' : 'その他'}</button>`;
 }
 function presetOn(p) { const c = cfg(); return Object.keys(p.cfg).every(k => JSON.stringify(c[k]) === JSON.stringify(p.cfg[k])); }
 function allPresets() { return PRESETS[store.mode].concat(store.custom[store.mode] || []); }
@@ -1202,10 +1315,20 @@ function renderPresets() {
     presetsEl.innerHTML = `<button class="chip menu" data-act="menus">${esc(cfg().menu || 'メニュー')} ▾</button>` + items().map((it, i) =>
       `<button class="chip${i === R.item ? ' on' : ''}${itemDone(i) ? ' done' : ''}" data-i="${i}">${esc(it.name)}　${R.done[i]}${it.sets > 0 ? '/' + it.sets : ''}</button>`).join('') +
       '<button class="chip" data-act="edit">＋ メニューを編集</button>';
+    // the exercise at hand stays in view
+    const cur = presetsEl.querySelector('.chip.on');
+    const pin = presetsEl.querySelector('.chip.menu');
+    if (cur && pin) presetsEl.scrollLeft = cur.offsetLeft - presetsEl.offsetLeft - pin.offsetWidth - 8;
     return;
   }
   last.chips = '';
-  presetsEl.innerHTML = allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('');
+  let h = allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('');
+  if (store.mode === 'countdown') {
+    const c = cfg(), now = c.min * 60 + c.sec;
+    h = `<button class="chip input" data-act="timepad">時間を入力</button>` + (store.recent || []).map(s => `<button class="chip${s === now ? ' on' : ''}" data-rc="${s}">${esc(jp(s))}</button>`).join('') + h;
+  }
+  presetsEl.innerHTML = h;
+  presetsEl.scrollLeft = 0;
 }
 function applyPreset(i) {
   const p = allPresets()[i]; if (!p) return;
@@ -1228,7 +1351,7 @@ const nextInOrder = name => { const i = ORDER.indexOf(name); return i >= 0 ? DAY
 function initRest() {
   const run = store.run, c = restCfg();
   if (run && run.day === today() && run.menu === (c.menu || '')) {
-    R.done = (run.done || []).slice(); R.holds = (run.holds || []).map(a => a.slice()); R.side = run.side || 0; R.sideRest = !!run.sideRest; R.item = run.item || 0; R.started = R.done.some(n => n > 0);
+    R.done = (run.done || []).slice(); R.holds = (run.holds || []).map(a => a.slice()); R.startedAt = run.startedAt || 0; R.endedAt = run.endedAt || 0; R.side = run.side || 0; R.sideRest = !!run.sideRest; R.item = run.item || 0; R.started = R.done.some(n => n > 0);
     if (run.finished) R.phase = 'done';
     // a rest or a timed exercise that was counting when the app closed carries on (or ends on the next tick)
     else if (run.phase === 'rest' && run.restDur) { Object.assign(R, { phase: 'rest', restStart: run.restStart, restDur: run.restDur, started: true }); }
@@ -1249,6 +1372,7 @@ function openMenus() {
   sheet.innerHTML = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>今日のメニュー</h2><button class="done-btn" data-act="close">閉じる</button></div>` +
     `<div class="menus">${list.map((p, i) => `<button class="menu-btn${(p.cfg.menu || p.name) === c.menu ? ' on' : ''}" data-menu="${i}"><b>${esc(p.name)}</b>` +
     `${next && next.name === p.name ? '<em>前回の次</em>' : ''}<span>${esc(desc(p))}</span></button>`).join('')}</div>` +
+    `<button class="wide" data-act="newmenu">＋ 新しいメニューを作る</button>` +
     `<p class="note">前回は ${esc(store.lastMenu || '—')}。種目や休憩の変更はメニューごとに覚えています。</p></div>`;
   pendingMenu = -1; sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
 }
@@ -1258,83 +1382,188 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 const sheet = $('#sheet'), scrim = $('#scrim');
 let sheetOpen = false;
 function openSheet() { buildSheet(); sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false'); }
-function closeSheet() { sheetOpen = false; sheet.classList.remove('open'); scrim.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
+function closeSheet() { keypad = null; picker = null; sheetOpen = false; sheet.classList.remove('open'); scrim.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
 function fmtField(f, v) { return f[6] === 'n' ? String(v) : jp(v); }
 function stepper(id, val, attrs) {
   return `<div class="stepper"><button ${attrs} data-d="-1" aria-label="減らす">${ICON.minus}</button><output id="${id}">${val}</output><button ${attrs} data-d="1" aria-label="増やす">${ICON.plus}</button></div>`;
 }
+const WORLD_SEC = () => `<div class="sec"><h3>世界</h3><div class="worlds">${Object.entries(WORLDS).map(([id, w]) =>
+  `<button class="world-btn${(store.prefs.world || 'iai') === id ? ' on' : ''}" data-world="${id}" style="background-image:url('assets/${w.charge}.webp')"><span>${w.name}</span></button>`).join('')}</div></div>`;
 function buildSheet() {
   const m = store.mode, c = cfg(), b = busy();
   let h = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${modeName(m)}の設定</h2><button class="done-btn" data-act="close">完了</button></div>`;
-  h += `<div class="sec"><h3>世界</h3><div class="worlds">${Object.entries(WORLDS).map(([id, w]) =>
-    `<button class="world-btn${(store.prefs.world || 'iai') === id ? ' on' : ''}" data-world="${id}" style="background-image:url('assets/${w.charge}.webp')"><span>${w.name}</span></button>`).join('')}</div></div>`;
   if (m === 'rest') h += restSheet();
   else if (m !== 'stopwatch') {
     if (b) h += `<p class="note">タイマーが動いている間は時間を変えられません。リセットすると変えられます。</p>`;
     else {
-      h += `<div class="sec"><h3>プリセット</h3><div class="chips">${allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('')}</div></div>`;
-      h += `<div class="sec"><h3>時間と回数</h3><div class="fields">` + FIELDS[m].map(f =>
-        `<div class="field"><span class="lb">${f[1]}${f[5] ? `<span class="hint">${f[5]}</span>` : ''}</span>${stepper('f-' + f[0], fmtField(f, c[f[0]]), `data-f="${f[0]}"`)}</div>`).join('') + `</div></div>`;
-      if (m === 'circuit') {
+      if (m === 'countdown') h += `<div class="sec"><h3>時間</h3><button class="wide" data-act="timepad">時間を入力（今：${esc(jp(c.min * 60 + c.sec))}）</button></div>`;
+      if (m === 'interval') {
         h += `<div class="sec"><h3>種目（上から順に）</h3><div>` + c.items.map((it, i) =>
           `<div class="item"><input id="item-${i}" data-name="${i}" value="${esc(it.name)}" maxlength="20" aria-label="種目${i + 1}の名前">${stepper('it-' + i, jp(it.dur), `data-it="${i}"`)}<button class="x" data-del="${i}" aria-label="種目${i + 1}を消す" ${c.items.length <= 1 ? 'disabled' : ''}>${ICON.x}</button></div>`).join('') +
-          `</div>${c.items.length < 12 ? '<button class="wide" data-act="add">＋ 種目を追加</button>' : ''}</div>`;
+          `</div>${c.items.length < 12 ? '<button class="wide" data-act="add">＋ 種目を選んで追加</button>' : ''}<p class="note">種目が1つなら運動と休憩のくり返し、2つ以上なら順番に回るサーキットになります。</p></div>`;
+        h += `<div class="sec"><h3>回数と休憩</h3><div class="fields">` + fieldsOf(c).map(f =>
+          `<div class="field"><span class="lb">${f[1]}${f[5] ? `<span class="hint">${f[5]}</span>` : ''}</span>${stepper('f-' + f[0], fmtField(f, c[f[0]]), `data-f="${f[0]}"`)}</div>`).join('') + `</div></div>`;
       }
       const mine = store.custom[m] || [];
       h += `<div class="sec"><h3>マイプリセット</h3>` +
         (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS[m].length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '<p class="note">よく使う設定を保存すると、画面の下にボタンが出ます。</p>') +
-        (mine.length < 6 ? `<button class="wide" data-act="savepreset">今の設定を保存（${esc(summary(m, c))}）</button>` : '') + `</div>`;
+        (mine.length < 12 ? `<button class="wide" data-act="savepreset">今の設定を保存（${esc(summary(m, c))}）</button>` : '') + `</div>`;
     }
   }
+  h += WORLD_SEC();
   const tg = (k, label, hint) => `<div class="toggle"><span class="lb">${label}<span class="hint">${hint}</span></span><button class="sw" role="switch" data-pref="${k}" aria-checked="${!!store.prefs[k]}" aria-label="${label}"></button></div>`;
   h += `<div class="sec"><h3>合図</h3><div>` +
-    tg('sound', '音', '残り3秒の太鼓、0秒の斬撃、休憩の納刀。iPhone はマナーモード中だと鳴りません') +
+    tg('sound', '音', 'iPhone はマナーモード中だと鳴りません') +
     tg('voice', '声で知らせる', '「ラスト」や種目名を読み上げます') +
     tg('vibrate', '振動', 'Android のみ対応') +
-    `</div><button class="wide" data-act="test">斬撃の音と演出を試す</button></div></div>`;
+    `</div><button class="wide" data-act="test">大技の音と演出を試す</button></div></div>`;
   sheet.innerHTML = h;
 }
-// the rest timer's menu can be edited mid-workout; progress per exercise is kept
+const ITEM_LIM = { sets: [0, 20, 1], rest: [15, 900, 15], work: [0, 600, 5], hmin: [0, 300, 5], hmax: [5, 300, 5] };
+const itemFmt = (k, v) => k === 'sets' ? (v || '∞') : k === 'work' ? (v ? jp(v) : 'なし') : jp(v);
+const EF_OPTS = [['', 'なし'], ['M', '限界まで'], ['R', 'あと1〜2回'], ['K', '余力を残す'], ['F', '崩れたら終わり']];
+const RK_OPTS = [['', 'なし'], ['S', '守る'], ['F', '目安'], ['K', '短くしない']];
+const kindOf = o => o.hold ? 'hold' : o.work ? 'work' : 'reps';
+// the fine settings of an exercise, shared by a menu's exercise (ref = its number) and the library form (ref = f)
+function detailHTML(o, ref) {
+  const opt = (key, list, cur) => `<div class="sets-row">${list.map(([v, tx]) => `<button class="chip${cur === v ? ' on' : ''}" data-ref="${ref}" data-key2="${key}" data-val="${v}">${tx}</button>`).join('')}</div>`;
+  const kind = kindOf(o), num = (k, tx) => `<span class="num">${tx}${stepper(`${k}-${ref}`, itemFmt(k, o[k] || 0), `data-ik="${k}" data-ii="${ref}"`)}</span>`;
+  return `<div><h4>回数の目安</h4><input data-reps="${ref}" value="${esc(o.reps || '')}" maxlength="20" placeholder="例：8〜10回" aria-label="回数の目安"></div>` +
+    `<div><h4>測り方</h4>${opt('kind', [['reps', '回数'], ['work', '秒数で動作'], ['hold', '保持']], kind)}</div>` +
+    (kind === 'work' ? `<div class="nums">${num('work', '動作の時間')}</div>` : '') +
+    (kind === 'hold' ? `<div class="nums">${num('hmin', '最低（チャイム）')}${num('hmax', '最大（カカカッ）')}</div>` : '') +
+    `<div><h4>追い込み</h4>${opt('ef', EF_OPTS, o.ef || '')}</div><div><h4>休憩の扱い</h4>${opt('rk', RK_OPTS, o.rk || '')}</div>`;
+}
+let openItem = -1;
 function restSheet() {
   syncDone();
   const c = cfg(), mine = store.custom.rest || [];
-  let h = `<div class="sec"><h3>メニュー</h3><div class="chips">${allPresets().map((p, i) => `<button class="chip${presetOn(p) ? ' on' : ''}" data-p="${i}">${esc(p.name)}</button>`).join('')}</div>` +
-    `<p class="note">選ぶと今日の種目が入れ替わり、進み具合は最初に戻ります。</p></div>`;
+  let h = `<div class="sec"><h3>メニュー：${esc(c.menu || '')}</h3><button class="wide" data-act="menus">メニューを切り替える</button></div>`;
   h += `<div class="sec"><h3>今日の種目（上から順に）</h3><div>` + c.items.map((it, i) =>
     `<div class="menu-item"><div class="row"><input id="ritem-${i}" data-rname="${i}" value="${esc(it.name)}" maxlength="24" aria-label="種目${i + 1}の名前">` +
+    `<button class="mini" data-rmove="${i}" data-dir="-1" aria-label="上へ" ${i === 0 ? 'disabled' : ''}>↑</button><button class="mini" data-rmove="${i}" data-dir="1" aria-label="下へ" ${i === c.items.length - 1 ? 'disabled' : ''}>↓</button>` +
     `<button class="x" data-rdel="${i}" aria-label="${esc(it.name)}を消す" ${c.items.length <= 1 ? 'disabled' : ''}>${ICON.x}</button></div>` +
-    `<div class="nums"><span class="num">セット数${stepper('rs-' + i, it.sets || '∞', `data-ik="sets" data-ii="${i}"`)}</span>` +
-    `<span class="num">休憩${stepper('rr-' + i, jp(it.rest), `data-ik="rest" data-ii="${i}"`)}</span>` +
-    `<span class="num">動作${stepper('rw-' + i, it.work ? jp(it.work) : 'なし', `data-ik="work" data-ii="${i}"`)}</span></div>` +
+    `<div class="nums"><span class="num">セット数${stepper('sets-' + i, itemFmt('sets', it.sets), `data-ik="sets" data-ii="${i}"`)}</span>` +
+    `<span class="num">休憩${stepper('rest-' + i, itemFmt('rest', it.rest), `data-ik="rest" data-ii="${i}"`)}</span></div>` +
+    `<button class="more" data-more="${i}">${openItem === i ? '▲ 閉じる' : '▼ 回数の目安・測り方・追い込み'}</button>` +
+    (openItem === i ? `<div class="detail">${detailHTML(it, i)}<button class="wide" data-libsave="${i}">この内容を種目に登録する</button></div>` : '') +
     `<span class="prog">${R.done[i]}セット済み</span></div>`).join('') +
-    `</div>${c.items.length < 15 ? '<button class="wide" data-act="radd">＋ 種目を追加</button>' : ''}` +
-    `<p class="note">セット数を 0（∞）にすると、回数を決めずに続けられます。「動作」に時間を入れた種目（プランクなど）は、タップで動作のカウントが始まり、0秒で休憩に入ります。</p></div>`;
+    `</div>${c.items.length < 20 ? '<button class="wide" data-act="radd">＋ 種目を選んで追加</button>' : ''}</div>`;
   h += `<div class="sec"><h3>マイメニュー</h3>` +
-    (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS.rest.length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '<p class="note">今日の種目を保存すると、次から1タップで呼び出せます。</p>') +
-    (mine.length < 8 ? `<div class="row-save"><input id="menu-name" placeholder="メニューの名前（例：胸の日）" maxlength="16" aria-label="保存するメニューの名前"><button class="wide" data-act="rsave">今の種目を保存</button></div>` : '') + `</div>`;
+    (mine.length ? `<div class="chips">${mine.map((p, i) => `<span class="my"><button class="chip" data-p="${PRESETS.rest.length + i}">${esc(p.name)}</button><button class="x" data-mydel="${i}" aria-label="${esc(p.name)}を消す">${ICON.x}</button></span>`).join('')}</div>` : '') +
+    `<button class="wide" data-act="newmenu">＋ 新しいメニューを作る</button>` +
+    `<div class="row-save"><input id="menu-name" placeholder="名前（例：胸の日）" maxlength="16" aria-label="保存するメニューの名前"><button class="wide" data-act="rsave">今の種目を別のメニューとして保存</button></div></div>`;
   const base = PRESETS.rest.find(p => (p.cfg.menu || p.name) === c.menu);
   h += `<div class="sec"><button class="wide" data-act="rreset">進み具合を最初に戻す</button>` +
     (base ? `<button class="wide" data-act="rdefault">${esc(c.menu)} を最初の内容に戻す（プランの種目・休憩）</button>` : '') + `</div>`;
   return h;
 }
-function changeRestItem(i, k, d) {
-  const it = items()[i];
-  if (k === 'sets') { it.sets = clamp(it.sets + d, 0, 20); const o = $('#rs-' + i); if (o) o.textContent = it.sets || '∞'; }
-  else if (k === 'work') { it.work = clamp((it.work || 0) + d * 5, 0, 300); const o = $('#rw-' + i); if (o) o.textContent = it.work ? jp(it.work) : 'なし'; }
-  else { it.rest = clamp(it.rest + d * 15, 15, 900); const o = $('#rr-' + i); if (o) o.textContent = jp(it.rest); }
-  save(); refreshChips(); render();
+
+/* ---------- number pad: any time for the countdown, any lead time ---------- */
+let keypad = null;
+function padTx() {
+  const d = keypad.digits;
+  if (keypad.kind === 'lead') return (d || '0') + '秒';
+  const p = d.padStart(6, '0');
+  return (p.slice(0, 2) !== '00' ? `${+p.slice(0, 2)}:${p.slice(2, 4)}` : `${+p.slice(2, 4)}`) + `:${p.slice(4)}`;
+}
+function openPad(kind) {
+  keypad = { kind, digits: '' };
+  const c = cfg(), now = kind === 'lead' ? `今：${c.prep || 0}秒` : `今：${jp(c.min * 60 + c.sec)}`;
+  const title = kind === 'lead' ? '開始までの秒数' : 'カウントの時間';
+  sheet.innerHTML = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${title}</h2><button class="done-btn" data-act="close">閉じる</button></div>` +
+    `<div class="pad-show empty" id="padShow">${padTx()}</div><p class="note" style="text-align:center">${esc(now)}${kind === 'lead' ? '（最大 600秒）' : '　右から入ります。130 と押すと 1分30秒'}</p>` +
+    `<div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-num="${n}">${n}</button>`).join('')}<button class="fn" data-act="padclear">クリア</button><button data-num="0">0</button><button class="fn" data-act="padback" aria-label="1文字消す">⌫</button></div>` +
+    `<button class="solid" data-act="padok">決定</button></div>`;
+  sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
+}
+function padOk() {
+  const c = cfg(), d = keypad.digits;
+  if (keypad.kind === 'lead') {
+    if (!d) { closeSheet(); return; }
+    c.prep = Math.min(600, +d); save(); rebuild(); closeSheet(); render(); return;
+  }
+  if (!d) { closeSheet(); return; }
+  const p = d.padStart(6, '0'), secs = +p.slice(0, 2) * 3600 + +p.slice(2, 4) * 60 + +p.slice(4);
+  if (secs < 1) { toast('1秒以上にしてください'); return; }
+  c.min = Math.floor(secs / 60); c.sec = secs % 60;
+  // a time that is not one of the fixed buttons comes back as its own button
+  if (!PRESETS.countdown.some(x => x.cfg.min * 60 + x.cfg.sec === secs)) store.recent = [secs, ...(store.recent || []).filter(s => s !== secs)].slice(0, 3);
+  save(); rebuild(); closeSheet(); renderPresets(); render();
+}
+
+/* ---------- exercise picker: add from the library to a menu, a new menu, or the interval list ---------- */
+let picker = null;
+const libMeta = l => [l.sets ? `${l.sets}セット` : '', l.rest ? `休憩${jp(l.rest)}` : '', l.reps].filter(Boolean).join('・');
+const toItem = l => ({ name: l.name, sets: l.sets, rest: l.rest, work: l.work || 0, rk: l.rk || '', ef: l.ef || '', reps: l.reps || '', hold: !!l.hold, hmin: l.hmin || 0, hmax: l.hmax || 0, sides: !!l.sides, nw: false });
+function pickerList() { return picker.target === 'interval' ? cfg().items : picker.target === 'new' ? picker.draft : items(); }
+function libRows() {
+  const q = picker.q.trim(), list = pickerList();
+  const rows = store.library.map((l, i) => [l, i]).filter(([l]) => (!picker.part || l.part === picker.part) && (!q || l.name.includes(q)));
+  rows.sort((a, b) => PARTS.indexOf(a[0].part) - PARTS.indexOf(b[0].part));
+  if (!rows.length) return `<p class="note">${q ? `「${esc(q)}」は見つかりません。下のボタンで登録できます。` : 'この部位の種目はまだありません。下のボタンで登録できます。'}</p>`;
+  return rows.map(([l, i]) => {
+    const n = list.filter(it => it.name === l.name).length;
+    return `<div class="pick"><button class="add" data-lib="${i}"><b>${esc(l.name)}</b><span>${esc(l.part)}${libMeta(l) ? '・' + esc(libMeta(l)) : ''}${n ? `　<em>${n > 1 ? n + '回' : ''}入れた</em>` : ''}</span></button>` +
+      `<button class="mini" data-lib="${i}" aria-label="${esc(l.name)}を入れる">＋</button><button class="mini" data-libedit="${i}" aria-label="${esc(l.name)}を直す">✎</button></div>`;
+  }).join('');
+}
+function renderPicker() {
+  const f = picker.form, isNew = picker.target === 'new';
+  let h = `<div class="sheet-in"><div class="grab"></div><div class="sheet-head"><h2>${isNew ? '新しいメニュー' : '種目を選ぶ'}</h2><button class="done-btn" data-act="pickdone">${isNew ? '閉じる' : '完了'}</button></div>`;
+  if (isNew) {
+    h += `<div class="sec"><input class="search" id="draft-name" value="${esc(picker.name)}" placeholder="メニューの名前（例：胸の日）" maxlength="16" aria-label="メニューの名前"><h3>入れた種目 ${picker.draft.length}</h3>` +
+      (picker.draft.length ? picker.draft.map((it, i) => `<div class="field"><span class="lb">${i + 1}. ${esc(it.name)}</span><button class="x" data-draftdel="${i}" aria-label="${esc(it.name)}を外す">${ICON.x}</button></div>`).join('') : '<p class="note">下の一覧から押すと、順番に入ります。</p>') +
+      `<button class="solid" data-act="draftmake" ${picker.draft.length ? '' : 'disabled'}>このメニューを作る</button></div>`;
+  }
+  if (f) {
+    h += `<div class="lib-form"><label>種目の名前<input id="lib-name" value="${esc(f.name)}" maxlength="24" placeholder="例：ケーブルカール"></label>` +
+      `<div><h3 style="margin:0 0 6px;font-size:13px;color:var(--mist)">部位</h3><div class="sets-row">${PARTS.map(p => `<button class="chip${f.part === p ? ' on' : ''}" data-fpart="${p}">${p}</button>`).join('')}</div></div>` +
+      `<div class="nums"><span class="num" style="display:flex;justify-content:space-between;align-items:center">セット数${stepper('sets-f', itemFmt('sets', f.sets), 'data-ik="sets" data-ii="f"')}</span><span class="num" style="display:flex;justify-content:space-between;align-items:center">休憩${stepper('rest-f', itemFmt('rest', f.rest), 'data-ik="rest" data-ii="f"')}</span></div>` +
+      `<div class="detail">${detailHTML(f, 'f')}</div>` +
+      `<button class="solid" data-act="libok">${picker.editing >= 0 ? '保存' : '登録して入れる'}</button>` +
+      (picker.editing >= 0 ? `<button class="danger" data-act="libdel">${picker.armDel ? 'もう一度押すと消します' : 'この種目を一覧から消す'}</button>` : '') +
+      `<button class="wide" data-act="libback">やめる</button></div></div>`;
+    sheet.innerHTML = h; return;
+  }
+  h += `<div class="sec"><input class="search" id="lib-q" value="${esc(picker.q)}" placeholder="種目を探す" aria-label="種目を探す">` +
+    `<div class="sets-row"><button class="chip${picker.part ? '' : ' on'}" data-part="">すべて</button>${PARTS.filter(p => store.library.some(l => l.part === p)).map(p => `<button class="chip${picker.part === p ? ' on' : ''}" data-part="${p}">${p}</button>`).join('')}</div>` +
+    `<button class="wide" data-act="libnew">＋ 新しい種目を登録</button><div id="lib-list">${libRows()}</div></div></div>`;
+  sheet.innerHTML = h;
+}
+function openPicker(target) {
+  picker = { target, q: '', part: '', form: null, editing: -1, armDel: false, name: '', draft: [] };
+  renderPicker(); sheet.scrollTop = 0; sheetOpen = true; sheet.classList.add('open'); scrim.classList.add('open'); sheet.setAttribute('aria-hidden', 'false');
+}
+function addFromLib(l) {
+  if (picker.target === 'interval') { cfg().items.push({ name: l.name, dur: l.dur || 40 }); save(); rebuild(); render(); }
+  else if (picker.target === 'new') picker.draft.push(toItem(l));
+  else { items().push(toItem(l)); syncDone(); save(); renderPresets(); render(); }
+  toast(`${l.name} を入れました`);
+}
+function saveLibItem(it) {
+  const old = store.library.find(l => l.name === it.name), l = toLib({ ...it, part: old ? old.part : undefined, dur: old ? old.dur : undefined });
+  if (old) Object.assign(old, l); else store.library.push(l);
+  store.libGone = store.libGone.filter(n => n !== it.name);
+  save(); toast(`${it.name} を種目に登録しました`);
+}
+function changeRestItem(ref, k, d) {
+  const it = ref === 'f' ? picker.form : items()[+ref], [a, b, step] = ITEM_LIM[k];
+  it[k] = clamp((it[k] || 0) + d * step, a, b);
+  if (k === 'hmax' && it.hmin > it.hmax) it.hmin = it.hmax;
+  if (k === 'hmin' && it.hmax < it.hmin) it.hmax = it.hmin;
+  ['sets', 'rest', 'work', 'hmin', 'hmax'].forEach(x => { const o = document.getElementById(`${x}-${ref}`); if (o) o.textContent = itemFmt(x, it[x] || 0); });
+  if (ref !== 'f') { save(); refreshChips(); render(); }
 }
 function changeField(k, d) {
-  const f = FIELDS[store.mode].find(x => x[0] === k), c = cfg();
+  const c = cfg(), f = fieldsOf(c).find(x => x[0] === k);
   c[k] = clamp(c[k] + d * f[4], f[2], f[3]);
-  if (store.mode === 'countdown' && c.min === 0 && c.sec === 0) c.sec = 5;
   save(); rebuild();
   const out = $('#f-' + k); if (out) out.textContent = fmtField(f, c[k]);
-  if (store.mode === 'countdown') { const s = $('#f-sec'); if (s) s.textContent = String(c.sec); }
   refreshChips(); render();
 }
 function changeItem(i, d) {
-  const it = cfg().items[i]; it.dur = clamp(it.dur + d * 5, 5, 300);
+  const it = cfg().items[i]; it.dur = clamp(it.dur + d * 5, 5, 600);
   save(); rebuild(); const out = $('#it-' + i); if (out) out.textContent = jp(it.dur); refreshChips(); render();
 }
 function refreshChips() {
@@ -1346,23 +1575,73 @@ function stopHold() { clearTimeout(holdT); clearInterval(holdI); }
 sheet.addEventListener('pointerdown', e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
   e.preventDefault();
-  const d = +b.dataset.d, run = () => b.dataset.f ? changeField(b.dataset.f, d) : b.dataset.ik ? changeRestItem(+b.dataset.ii, b.dataset.ik, d) : changeItem(+b.dataset.it, d);
+  const d = +b.dataset.d, run = () => b.dataset.f ? changeField(b.dataset.f, d) : b.dataset.ik ? changeRestItem(b.dataset.ii, b.dataset.ik, d) : changeItem(+b.dataset.it, d);
   run(); stopHold(); holdT = setTimeout(() => { holdI = setInterval(run, 70); }, 380);
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => sheet.addEventListener(t, stopHold));
 sheet.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || t.dataset.d) return;
   const m = store.mode, c = cfg();
+  // number pad
+  if (t.dataset.num != null) { if (keypad.digits.length < (keypad.kind === 'lead' ? 3 : 6)) keypad.digits = (keypad.digits + t.dataset.num).replace(/^0+(?=\d)/, ''); const s = $('#padShow'); s.textContent = padTx(); s.classList.toggle('empty', !keypad.digits); return; }
+  if (t.dataset.act === 'padback' || t.dataset.act === 'padclear') { keypad.digits = t.dataset.act === 'padback' ? keypad.digits.slice(0, -1) : ''; const s = $('#padShow'); s.textContent = padTx(); s.classList.toggle('empty', !keypad.digits); return; }
+  if (t.dataset.act === 'padok') return padOk();
+  // exercise picker
+  if (t.dataset.lib != null) { addFromLib(store.library[+t.dataset.lib]); if (picker.target === 'new') renderPicker(); else $('#lib-list').innerHTML = libRows(); return; }
+  if (t.dataset.libedit != null) { picker.editing = +t.dataset.libedit; picker.form = clone(store.library[picker.editing]); picker.armDel = false; renderPicker(); sheet.scrollTop = 0; return; }
+  if (t.dataset.part != null) { picker.part = t.dataset.part; renderPicker(); return; }
+  if (t.dataset.fpart != null) { picker.form.part = t.dataset.fpart; renderPicker(); return; }
+  if (t.dataset.draftdel != null) { picker.draft.splice(+t.dataset.draftdel, 1); renderPicker(); return; }
+  if (t.dataset.key2) {
+    const ref = t.dataset.ref, o = ref === 'f' ? picker.form : items()[+ref], k = t.dataset.key2, v = t.dataset.val;
+    if (k === 'kind') { o.hold = v === 'hold'; o.work = v === 'work' ? (o.work || 30) : 0; if (o.hold && !o.hmax) { o.hmin = 20; o.hmax = 30; } }
+    else o[k] = v;
+    if (ref === 'f') renderPicker(); else { save(); buildSheet(); render(); }
+    return;
+  }
+  if (t.dataset.more != null) { const i = +t.dataset.more; openItem = openItem === i ? -1 : i; buildSheet(); return; }
+  if (t.dataset.libsave != null) { saveLibItem(items()[+t.dataset.libsave]); return; }
+  if (t.dataset.rmove != null) {
+    const i = +t.dataset.rmove, j = i + +t.dataset.dir; syncDone();
+    [c.items[i], c.items[j]] = [c.items[j], c.items[i]]; [R.done[i], R.done[j]] = [R.done[j], R.done[i]]; [R.holds[i], R.holds[j]] = [R.holds[j], R.holds[i]];
+    if (R.item === i) R.item = j; else if (R.item === j) R.item = i;
+    if (openItem === i) openItem = j; else if (openItem === j) openItem = i;
+    saveRun(); buildSheet(); last.chips = ''; renderPresets(); render(); return;
+  }
   if (t.dataset.p != null) return applyPreset(+t.dataset.p);
   if (t.dataset.pref) { store.prefs[t.dataset.pref] = !store.prefs[t.dataset.pref]; t.setAttribute('aria-checked', store.prefs[t.dataset.pref]); save(); audio(); return; }
   if (t.dataset.del != null) { c.items.splice(+t.dataset.del, 1); save(); rebuild(); buildSheet(); renderPresets(); render(); return; }
   if (t.dataset.mydel != null) { store.custom[m].splice(+t.dataset.mydel, 1); save(); buildSheet(); renderPresets(); render(); return; }
-  if (t.dataset.rdel != null) { const i = +t.dataset.rdel; c.items.splice(i, 1); R.done.splice(i, 1); if (R.item > i) R.item--; syncDone(); save(); buildSheet(); renderPresets(); render(); return; }
+  if (t.dataset.rdel != null) { const i = +t.dataset.rdel; c.items.splice(i, 1); R.done.splice(i, 1); R.holds.splice(i, 1); if (R.item > i) R.item--; openItem = -1; syncDone(); save(); buildSheet(); renderPresets(); render(); return; }
   const act = t.dataset.act;
-  if (act === 'radd') { c.items.push({ name: `種目${c.items.length + 1}`, sets: 3, rest: 90 }); syncDone(); save(); buildSheet(); renderPresets(); render(); const inp = $('#ritem-' + (c.items.length - 1)); if (inp) { inp.focus(); inp.select(); } return; }
+  if (act === 'radd') return openPicker('rest');
+  if (act === 'newmenu') return openPicker('new');
+  if (act === 'menus') return openMenus();
+  if (act === 'timepad') return openPad('count');
+  if (act === 'pickdone') { const tg = picker.target; picker = null; if (tg === 'new') closeSheet(); else { buildSheet(); sheet.scrollTop = 0; } return; }
+  if (act === 'libnew') { picker.editing = -1; picker.form = { ...toLib({ name: picker.q.trim() }), part: picker.part || 'その他', rest: 90 }; renderPicker(); sheet.scrollTop = 0; return; }
+  if (act === 'libback') { picker.form = null; renderPicker(); return; }
+  if (act === 'libok') {
+    const f = picker.form; f.name = ($('#lib-name').value || '').trim();
+    if (!f.name) { toast('種目の名前を入れてください'); return; }
+    if (picker.editing >= 0) { Object.assign(store.library[picker.editing], f); toast(`${f.name} を保存しました`); }
+    else { const old = store.library.find(l => l.name === f.name); if (old) Object.assign(old, f); else store.library.push(f); store.libGone = store.libGone.filter(n => n !== f.name); addFromLib(f); }
+    save(); picker.form = null; renderPicker(); return;
+  }
+  if (act === 'libdel') {
+    if (!picker.armDel) { picker.armDel = true; renderPicker(); return; }
+    const gone = store.library.splice(picker.editing, 1)[0]; store.libGone.push(gone.name); save(); picker.form = null; picker.editing = -1; renderPicker(); toast(`${gone.name} を一覧から消しました`); return;
+  }
+  if (act === 'draftmake') {
+    const name = ($('#draft-name').value || '').trim() || `マイメニュー${(store.custom.rest || []).length + 1}`;
+    (store.custom.rest = store.custom.rest || []).push({ name, cfg: { menu: name, items: clone(picker.draft) } }); save();
+    const made = store.custom.rest[store.custom.rest.length - 1]; picker = null;
+    if (R.started && R.phase !== 'done') toast(`「${name}」を作りました。メニューの一覧から選べます`); else { store.mode === 'rest' && switchMenu(made, true); toast(`「${name}」を作りました`); }
+    closeSheet(); renderPresets(); render(); return;
+  }
   if (act === 'rsave') {
     const name = ($('#menu-name').value || '').trim() || summary('rest', c);
-    (store.custom.rest = store.custom.rest || []).push({ name, cfg: clone(c) }); save(); buildSheet(); toast(`「${name}」を保存しました`); return;
+    (store.custom.rest = store.custom.rest || []).push({ name, cfg: { ...clone(c), menu: name } }); save(); buildSheet(); toast(`「${name}」を保存しました`); return;
   }
   if (act === 'rreset') { resetRest(); buildSheet(); renderPresets(); render(); toast('進み具合を最初に戻しました'); return; }
   if (act === 'rdefault') { const p = PRESETS.rest.find(x => (x.cfg.menu || x.name) === c.menu); if (p) { switchMenu(p, true); toast(`${p.name} を最初の内容に戻しました`); } return; }
@@ -1374,7 +1653,7 @@ sheet.addEventListener('click', e => {
     switchMenu(p); closeSheet(); toast(`${p.name} にしました`); return;
   }
   if (act === 'close') closeSheet();
-  else if (act === 'add') { c.items.push({ name: `種目${c.items.length + 1}`, dur: 30 }); save(); rebuild(); buildSheet(); render(); const inp = $('#item-' + (c.items.length - 1)); if (inp) inp.focus(); }
+  else if (act === 'add') openPicker('interval');
   else if (act === 'savepreset') { (store.custom[m] = store.custom[m] || []).push({ name: summary(m, c), cfg: clone(c) }); save(); buildSheet(); renderPresets(); render(); toast('マイプリセットに保存しました'); }
   else if (act === 'test') { audio(); const was = store.prefs.sound; store.prefs.sound = true; closeSheet(); setTimeout(() => { strike(); store.prefs.sound = was; }, 350); }
 });
@@ -1382,6 +1661,10 @@ sheet.addEventListener('input', e => {
   const t = e.target;
   if (t.dataset.name != null) { cfg().items[+t.dataset.name].name = t.value.trim(); save(); rebuild(); render(); }
   else if (t.dataset.rname != null) { items()[+t.dataset.rname].name = t.value.trim() || `種目${+t.dataset.rname + 1}`; save(); render(); }
+  else if (t.dataset.reps != null) { const o = t.dataset.reps === 'f' ? picker.form : items()[+t.dataset.reps]; o.reps = t.value; if (t.dataset.reps !== 'f') { save(); render(); } }
+  else if (t.id === 'lib-q') { picker.q = t.value; $('#lib-list').innerHTML = libRows(); }
+  else if (t.id === 'draft-name') picker.name = t.value;
+  else if (t.id === 'lib-name' && picker.form) picker.form.name = t.value;
 });
 scrim.addEventListener('click', closeSheet);
 
@@ -1395,16 +1678,27 @@ presetsEl.addEventListener('click', e => {
   if (t.dataset.i != null) { jumpItem(+t.dataset.i); render(); }
   else if (t.dataset.act === 'edit') openSheet();
   else if (t.dataset.act === 'menus') openMenus();
+  else if (t.dataset.act === 'timepad') openPad('count');
+  else if (t.dataset.rc != null) { const c = cfg(), s = +t.dataset.rc; c.min = Math.floor(s / 60); c.sec = s % 60; save(); rebuild(); renderPresets(); render(); }
   else if (t.dataset.p != null) applyPreset(+t.dataset.p);
+});
+leadsEl.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.act === 'leadpad') return openPad('lead');
+  cfg().prep = +t.dataset.lead; save(); rebuild(); render();
 });
 ctlEl.addEventListener('click', e => { const t = e.target.closest('[data-k]'); if (t && !t.disabled) { const b = ctlFns[t.dataset.k]; if (b && b.fn) b.fn(); } });
 function stageAction() { const c = ctlFns.c || controls().c; if (c.fn && !c.noStage && !c.dis) c.fn(); }
-stage.addEventListener('click', stageAction);
+// on the idle countdown the numerals open the number pad; everywhere else the screen is the big button
+stage.addEventListener('click', e => {
+  if (store.mode === 'countdown' && T.status === 'idle' && e.target.closest('#time')) return openPad('count');
+  stageAction();
+});
 document.addEventListener('keydown', e => {
   if (sheetOpen) { if (e.key === 'Escape') closeSheet(); return; }
   if (e.key === ' ' || e.key === 'Enter') { if (e.target.closest && e.target.closest('button,input')) return; e.preventDefault(); stageAction(); }
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (isActive()) wake(true); logic(); render(); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (anyActive()) wake(true); logic(); render(); } });
 
 function frame() { logic(); render(); stepLeaves(); requestAnimationFrame(frame); }
 setInterval(logic, 250); // keeps phases advancing when animation frames are throttled
