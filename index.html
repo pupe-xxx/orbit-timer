@@ -33,7 +33,7 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 /* a double tap on the timer must not zoom the page (taps come fast between sets); pinch zoom stays */
-html{height:100%;box-sizing:border-box;background:var(--ink);touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{height:100%;box-sizing:border-box;background:var(--ink);overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* size by the small viewport, so the numerals do not change size when the browser bars show or hide */
 @supports (height:1svh){ :root{--U:min(100vw, 58svh, 560px)} }
 body{height:100%;margin:0;background:var(--ink);color:var(--paper);font-family:var(--font-ui);overflow:hidden;
@@ -143,7 +143,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .time .t{font-size:.36em;width:1.1em;text-align:left;padding-bottom:.1em;color:var(--mist)}
 .time.beat{animation:beat .7s cubic-bezier(.2,.8,.2,1)}
 @keyframes beat{0%{transform:scale(1.14)}100%{transform:scale(1)}}
-.sub,.next{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 12px;border-radius:999px;background:rgba(8,7,10,.5);
+.sub,.next{flex:none;max-width:100%;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 12px;border-radius:999px;background:rgba(8,7,10,.5);
   text-shadow:0 0 4px #000,0 1px 8px #000;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .sub{font-size:16px;font-weight:700;letter-spacing:.06em;color:#fff;background:rgba(8,7,10,.62)}
 .next{font-size:14px;font-weight:500;letter-spacing:.03em;color:#efeae3;background:rgba(8,7,10,.62)}
@@ -294,7 +294,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
   transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s;pointer-events:none;text-align:center}
 .toast.show{transform:translate(-50%,0);opacity:1}
 
-@media (max-height:660px){ :root{--U:min(100vw, 52vh, 560px)} @supports (height:1svh){ :root{--U:min(100vw, 52svh, 560px)} } .ctl .b{width:52px;height:52px} .ctl.main .b{width:66px;height:66px} .grove{height:26px} .bamboo{height:24px} .phase{font-size:17px;min-height:0} .sub{font-size:14px} .next{font-size:12.5px} .chip{min-height:38px} .leads{min-height:36px} .leads .chip{min-height:36px} .foot{gap:6px;padding-top:6px} .main{gap:4px;padding-top:0} }
+@media (max-height:720px){ :root{--U:min(100vw, 52vh, 560px)} @supports (height:1svh){ :root{--U:min(100vw, 52svh, 560px)} } .ctl .b{width:52px;height:52px} .ctl.main .b{width:66px;height:66px} .grove{height:26px} .bamboo{height:24px} .phase{font-size:17px;min-height:0} .sub{font-size:14px} .next{font-size:12.5px} .chip{min-height:38px} .leads{min-height:36px} .leads .chip{min-height:36px} .foot{gap:6px;padding-top:6px} .main{gap:4px;padding-top:0} }
 @media (prefers-reduced-motion:reduce){
   #app.tense,#app.strike,.time.beat,.bamboo.cur::after{animation:none!important}
   .scene{transition:opacity .4s}
@@ -312,7 +312,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 </div>
 
 <div id="app" data-phase="idle">
-  <div class="world-fx" aria-hidden="true" style="position:fixed;inset:0;pointer-events:none;z-index:5"><div class="flash"></div><div class="slash"></div><div class="slash slash2"></div></div>
+  <div class="world-fx" aria-hidden="true" style="position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:5"><div class="flash"></div><div class="slash"></div><div class="slash slash2"></div></div>
   <header class="top">
     <div class="bar">
       <div class="brand"><b>O</b>RBIT</div>
@@ -559,10 +559,17 @@ function summary(mode, c) {
 }
 
 /* ---------- sound: taiko, blade, bell (all synthesized) ---------- */
-let ac = null, noiseBuf = null;
+let ac = null, noiseBuf = null, acStale = false, hiddenAt = 0;
 function audio() {
-  if (!ac) { const C = window.AudioContext || window.webkitAudioContext; if (C) try { ac = new C(); } catch (e) {} }
-  if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
+  if (!ac) {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (C) try {
+      ac = new C();
+      ac.onstatechange = () => { if (ac && document.visibilityState === 'visible' && ac.state !== 'running' && ac.state !== 'closed') ac.resume().catch(() => {}); };
+    } catch (e) {}
+  }
+  // iOS stops the sound with 'suspended' or 'interrupted' (screen lock, another app, a call)
+  if (ac && ac.state !== 'running' && ac.state !== 'closed') ac.resume().catch(() => {});
   if (ac && !noiseBuf) {
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 1.2, ac.sampleRate);
     const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -614,7 +621,27 @@ const CUES = {
   punch: () => { noise(0, 0.12, 0.35, 800, 3000, 1); osc('sine', 95, 38, 0.1, 0.5, 0.95); noise(0.1, 0.2, 0.5, 900, 200, 0.7); },
   breath: () => noise(0, 1.4, 0.08, 800, 400, 1),
 };
-function play(n) { if (store.prefs.sound && ac) try { CUES[n](); } catch (e) {} }
+function fire(n) { try { CUES[n](); } catch (e) {} }
+function play(n) {
+  if (!store.prefs.sound) return;
+  audio(); if (!ac) return;
+  if (ac.state === 'running') return fire(n);
+  // stopped: sound it when it comes back, unless that is too late to mean anything
+  const c = ac, at = Date.now();
+  c.resume().then(() => { if (c === ac && Date.now() - at < 1500) fire(n); }).catch(() => {});
+  soundCheck();
+}
+// browsers only let the sound restart from a tap, so say so instead of staying silent
+function soundCheck() {
+  setTimeout(() => { if (store.prefs.sound && document.visibilityState === 'visible' && (!ac || ac.state !== 'running')) toast('音が止まっています。画面を一度押すと戻ります'); }, 600);
+}
+// every tap restarts the sound; after time away the old sound is replaced, iOS can leave it silent while it reports running
+function unlock() {
+  if (acStale && ac) { try { ac.close().catch(() => {}); } catch (e) {} ac = null; noiseBuf = null; }
+  acStale = false; audio();
+  if (anyActive()) wake(true);
+}
+['pointerup', 'touchend', 'click', 'keydown'].forEach(k => document.addEventListener(k, unlock, { capture: true, passive: true }));
 // start / strike / rest sounds come from the chosen world
 function cue(kind) { play(world().snd[kind]); }
 function buzz(p) { if (store.prefs.vibrate && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
@@ -625,7 +652,7 @@ function say(t) {
 let wl = null;
 async function wake(on) {
   try {
-    if (on) { if (!wl && 'wakeLock' in navigator) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } }
+    if (on) { if (!wl && 'wakeLock' in navigator) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; if (document.visibilityState === 'visible' && anyActive()) wake(true); }); } }
     else if (wl) { const w = wl; wl = null; await w.release(); }
   } catch (e) { wl = null; }
 }
@@ -1283,7 +1310,7 @@ addEventListener('resize', sizeCanvas); sizeCanvas();
 let pendingMode = null, pendingT = 0;
 function renderTabs() {
   $('#tabs').innerHTML = MODES.map(m => `<button class="tab" role="tab" data-m="${m.id}" aria-selected="${m.id === store.mode}">${m.name}<b data-b="${m.id}"></b></button>`).join('');
-  const cur = $('#tabs [aria-selected="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  const cur = $('#tabs [aria-selected="true"]'); if (cur) { const bar = $('#tabs'), l = cur.offsetLeft - bar.offsetLeft; if (l < bar.scrollLeft) bar.scrollLeft = l; else if (l + cur.offsetWidth > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = l + cur.offsetWidth - bar.clientWidth; } // not scrollIntoView: it also scrolls the page, which then stays shifted
 }
 function switchMode(id) {
   if (id === store.mode) return;
@@ -1698,7 +1725,16 @@ document.addEventListener('keydown', e => {
   if (sheetOpen) { if (e.key === 'Escape') closeSheet(); return; }
   if (e.key === ' ' || e.key === 'Enter') { if (e.target.closest && e.target.closest('button,input')) return; e.preventDefault(); stageAction(); }
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { if (anyActive()) wake(true); logic(); render(); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') { hiddenAt = Date.now(); return; }
+  if (hiddenAt && Date.now() - hiddenAt > 5000) acStale = true;
+  hiddenAt = 0; unshift();
+  if (anyActive()) { wake(true); if (store.prefs.sound) { audio(); soundCheck(); } }
+  logic(); render();
+});
+// the page itself never scrolls; put it back if the keyboard or the browser moved it
+function unshift() { const e = document.activeElement; if (e && e.tagName === 'INPUT') return; if (scrollX || scrollY) scrollTo(0, 0); if (document.body.scrollTop) document.body.scrollTop = 0; if (app.scrollTop) app.scrollTop = 0; }
+addEventListener('scroll', unshift, { passive: true }); addEventListener('resize', unshift); addEventListener('orientationchange', unshift); document.addEventListener('focusout', () => setTimeout(unshift, 50));
 
 function frame() { logic(); render(); stepLeaves(); requestAnimationFrame(frame); }
 setInterval(logic, 250); // keeps phases advancing when animation frames are throttled
