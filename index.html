@@ -385,38 +385,47 @@ const DEF = {
 // o.h = [shortest, longest] seconds of a hold (a sound at each); o.s = held once per side (right, a short rest, left)
 const ex = (name, sets, rest, rk = '', ef = '', o = {}) => ({ name, sets, rest, work: 0, rk, ef, reps: o.r || '',
   hold: !!o.h, hmin: o.h ? o.h[0] : 0, hmax: o.h ? o.h[1] : 0, sides: !!o.s, nw: !!o.n });
-const HS = [ex('壁の逆立ち', 2, 60, 'K', 'F', { r: '45〜60秒', h: [45, 60] }), ex('壁なしの逆立ち', 6, 45, 'K', 'F', { r: '動かずに30〜60秒', h: [30, 60] })];
+// plan v3.2: A days start with one heavy lift (warm-up sets first), B days are the rep days; the skills moved out of the workout
+const warm = name => ex(name + 'の準備（半分×5 → 8割×3）', 2, 60, 'S', 'K', { r: '5回 → 3回' });
 const DAY_MENUS = [
-  { name: 'Push A', cfg: { menu: 'Push A', items: [...HS, ex('ダンベルベンチプレス', 4, 120, 'F', 'R', { r: '8〜10回' }),
-    ex('インクラインダンベルプレス', 3, 90, 'F', 'R', { r: '10〜12回' }), ex('ダンベルフライ', 2, 60, 'S', 'R', { r: '12回' }),
-    ex('サイドレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }), ex('クローズグリップ・ダンベルプレス', 4, 75, 'F', 'R', { r: '10〜12回' }),
+  { name: 'Push A', cfg: { menu: 'Push A', items: [warm('ベンチ'), ex('重 ダンベルベンチプレス', 4, 180, 'F', 'K', { r: '5回（余力2回）' }),
+    ex('インクラインダンベルプレス', 3, 120, 'F', 'R', { r: '8〜10回' }), ex('クローズグリップ・ダンベルプレス', 4, 90, 'F', 'R', { r: '8〜10回' }),
+    ex('ダンベルフライ', 2, 60, 'S', 'R', { r: '12回' }), ex('サイドレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }),
     ex('リバースリストカール', 3, 45, 'S', 'K', { r: '15〜20回', n: 1 })] } },
-  { name: 'Pull A', cfg: { menu: 'Pull A', items: [...HS, ex('ワンハンドロー', 4, 90, 'F', 'R', { r: '8〜10回' }),
+  { name: 'Pull A', cfg: { menu: 'Pull A', items: [warm('ロー'), ex('重 ワンハンドロー', 4, 180, 'F', 'K', { r: '5回（余力2回）' }),
     ex('インクライン・ダンベルロー（肘を開く）', 3, 75, 'F', 'R', { r: '10〜12回' }), ex('ダンベルRDL', 3, 120, 'F', 'K', { r: '8〜10回' }),
     ex('リアレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }), ex('インクラインダンベルカール', 3, 60, 'S', 'M', { r: '10〜12回' }),
     ex('リバースカール', 3, 60, 'S', 'M', { r: '12回', n: 1 })] } },
-  { name: 'Legs A', cfg: { menu: 'Legs A', items: [ex('プランシェ・リーン', 2, 90, 'K', 'F', { r: '15〜20秒', h: [15, 20] }),
-    ex('アドバンスド・タック保持', 3, 150, 'K', 'F', { r: '5〜10秒', h: [5, 10] }), ex('タック・プランシェ腕立て', 3, 120, 'K', 'F', { r: '限界の2回手前' }),
-    ex('ゴブレットスクワット', 4, 90, 'F', 'K', { r: '12回' }), ex('ダンベル・ヒップスラスト（重め）', 3, 120, 'F', 'R', { r: '8〜10回', n: 1 }),
-    ex('ブルガリアンスプリット', 3, 120, 'F', 'K', { r: '8回' }), ex('カーフレイズ', 3, 45, 'S', 'M', { r: '15〜20回' }),
-    ex('ゾットマンカール', 3, 60, 'S', 'R', { r: '8〜10回', n: 1 })] } },
-  { name: 'Push B', cfg: { menu: 'Push B', items: [...HS, ex('ダンベルショルダープレス', 4, 120, 'F', 'R', { r: '8〜10回' }),
+  { name: 'Legs A', cfg: { menu: 'Legs A', items: [warm('ブルガリアン'), ex('重 ブルガリアンスプリット', 4, 180, 'F', 'K', { r: '5回（左右・余力2回）' }),
+    ex('ダンベル・ヒップスラスト', 3, 120, 'F', 'R', { r: '8〜10回', n: 1 }), ex('ゴブレットスクワット', 3, 90, 'F', 'K', { r: '10〜12回' }),
+    ex('カーフレイズ', 3, 45, 'S', 'M', { r: '15〜20回' }), ex('ゾットマンカール', 3, 60, 'S', 'R', { r: '8〜10回', n: 1 })] } },
+  { name: 'Push B', cfg: { menu: 'Push B', items: [ex('速いベンチ', 6, 90, 'S', 'K', { r: '3回（全力で速く）' }),
+    ex('ダンベルショルダープレス', 4, 120, 'F', 'R', { r: '6〜8回' }),
     ex('サイドレイズ', 4, 60, 'S', 'M', { r: '12〜15回' }), ex('サイドライイング・ラテラルレイズ', 3, 45, 'S', 'M', { r: '12〜15回' }),
     ex('インクラインダンベルフライ', 3, 60, 'S', 'R', { r: '12〜15回' }), ex('ナロープッシュアップ', 3, 60, 'S', 'R', { r: '8〜12回' }),
     ex('オーバーヘッド・エクステンション', 3, 60, 'S', 'K', { r: '10〜12回', n: 1 }), ex('リストカール', 3, 45, 'S', 'R', { r: '15〜20回', n: 1 })] } },
-  { name: 'Pull B', cfg: { menu: 'Pull B', items: [...HS, ex('ワンハンドロー（重め）', 4, 120, 'F', 'R', { r: '6〜8回' }),
+  { name: 'Pull B', cfg: { menu: 'Pull B', items: [ex('ワンハンドロー', 4, 90, 'F', 'R', { r: '8〜10回' }),
     ex('インクライン・ダンベルロー（肘を体に沿わせる）', 3, 75, 'F', 'R', { r: '10〜12回' }), ex('ダンベルプルオーバー', 3, 75, 'F', 'R', { r: '10〜12回' }),
     ex('リアレイズ', 3, 60, 'S', 'M', { r: '12〜15回' }), ex('ハンマーカール', 3, 60, 'S', 'M', { r: '10〜12回' }),
     ex('スパイダーカール', 3, 60, 'S', 'M', { r: '10〜12回', n: 1 }), ex('スーツケース・ホールド', 2, 60, 'S', 'K', { r: '45秒（左右）', h: [45, 45], s: 1 })] } },
-  { name: 'Legs B', cfg: { menu: 'Legs B', items: [ex('疑似プランシェ腕立て', 3, 120, 'K', 'F', { r: '6〜10回' }),
-    ex('タック保持', 3, 120, 'K', 'F', { r: '10〜20秒', h: [10, 20] }), ex('アドバンスド・タック保持', 2, 120, 'K', 'F', { r: '5〜10秒', h: [5, 10] }),
+  { name: 'Legs B', cfg: { menu: 'Legs B', items: [
     ex('片脚ヒップスラスト', 3, 90, 'F', 'R', { r: '8〜10回（左右）', n: 1 }), ex('ブルガリアンスプリット（軽め）', 3, 90, 'F', 'K', { r: '10回' }),
     ex('スライディング・レッグカール', 3, 90, 'F', 'R', { r: '8〜10回', n: 1 }), ex('カーフレイズ', 3, 45, 'S', 'M', { r: '20回' }),
     ex('ホロウボディ・ホールド', 3, 60, 'S', 'F', { r: '20〜30秒', h: [20, 30], n: 1 }), ex('レッグレイズ', 3, 45, 'S', 'F', { r: '12回' }),
     ex('テイトプレス', 3, 60, 'S', 'R', { r: '12回', n: 1 })] } },
 ];
+// the skills, done at another time of day: offered in the menu list but outside the PPL order
+const SKILL_MENUS = [
+  { name: '技 逆立ち', cfg: { menu: '技 逆立ち', items: [ex('壁の逆立ち', 2, 60, 'K', 'F', { r: '45〜60秒', h: [45, 60] }),
+    ex('壁なしの逆立ち', 6, 45, 'K', 'F', { r: '動かずに30〜60秒', h: [30, 60] })] } },
+  { name: '技 プランシェ①（Legs A の日）', cfg: { menu: '技 プランシェ①（Legs A の日）', items: [ex('プランシェ・リーン', 2, 90, 'K', 'F', { r: '15〜20秒', h: [15, 20] }),
+    ex('アドバンスド・タック保持', 3, 150, 'K', 'F', { r: '5〜10秒', h: [5, 10] }), ex('タック・プランシェ腕立て', 3, 120, 'K', 'F', { r: '限界の2回手前' })] } },
+  { name: '技 プランシェ②（Legs B の日）', cfg: { menu: '技 プランシェ②（Legs B の日）', items: [ex('疑似プランシェ腕立て', 3, 120, 'K', 'F', { r: '6〜10回' }),
+    ex('タック保持', 3, 120, 'K', 'F', { r: '10〜20秒', h: [10, 20] }), ex('アドバンスド・タック保持', 2, 120, 'K', 'F', { r: '5〜10秒', h: [5, 10] })] } },
+];
+const PLAN_MENUS = [...DAY_MENUS, ...SKILL_MENUS];
 // bump when the plan's menus change: saved copies of the day menus are replaced by the new ones once
-const MENU_VER = 7;
+const MENU_VER = 8;
 const HOLD_LEAD = 5;   // a hold starts counting this many seconds after the tap, to get into position
 const SIDE_REST = 15;  // the short rest between the right and the left side of one set
 DEF.rest = clone(DAY_MENUS[0].cfg);
@@ -435,7 +444,7 @@ const PRESETS = {
       { name: 'プランク', dur: 45 }, { name: 'サイドプランク 右', dur: 30 }, { name: 'サイドプランク 左', dur: 30 },
       { name: 'マウンテンクライマー', dur: 30 }, { name: 'デッドバグ', dur: 40 }, { name: 'ヒップリフト', dur: 40 } ] } },
   ],
-  rest: [...DAY_MENUS, { name: 'フリー（休憩90秒）', cfg: { menu: 'フリー', items: [ex('フリー', 0, 90)] } }],
+  rest: [...PLAN_MENUS, { name: 'フリー（休憩90秒）', cfg: { menu: 'フリー', items: [ex('フリー', 0, 90)] } }],
   countdown: [1, 3, 5, 10, 20].map(m => ({ name: m + '分', cfg: { min: m, sec: 0 } })),
   stopwatch: [],
 };
@@ -459,7 +468,7 @@ const toLib = it => ({ name: it.name, part: it.part || guessPart(it.name), sets:
   rk: it.rk || '', ef: it.ef || '', reps: it.reps || '', hold: !!it.hold, hmin: it.hmin || 0, hmax: it.hmax || 0, sides: !!it.sides, dur: it.dur || 40 });
 function seedLibrary(lib, gone) {
   const has = new Set(lib.map(l => l.name)), add = it => { if (!has.has(it.name) && !gone.includes(it.name)) { has.add(it.name); lib.push(toLib(it)); } };
-  DAY_MENUS.forEach(m => m.cfg.items.forEach(add));
+  PLAN_MENUS.forEach(m => m.cfg.items.forEach(add));
   PRESETS.interval.forEach(p => p.cfg.items.forEach(it => { if (p.cfg.items.length > 1) add({ name: it.name, dur: it.dur, sets: 3, rest: 60 }); }));
   return lib;
 }
@@ -515,6 +524,7 @@ function load() {
     if (s.custom.rest) s.custom.rest = s.custom.rest.filter(p => p.cfg && Array.isArray(p.cfg.items));
     if (d.run) s.run = d.run;
     if (d.lastMenu) s.lastMenu = d.lastMenu;
+    if (d.pplDone) s.pplDone = d.pplDone;
     if (d.best && typeof d.best === 'object') s.best = d.best;
     if (d.menus && typeof d.menus === 'object') s.menus = d.menus;
     if (Array.isArray(d.library)) s.library = d.library;
@@ -522,10 +532,10 @@ function load() {
     if (Array.isArray(d.recent)) s.recent = d.recent;
     // the plan changed: today's day menu takes the new exercises (today's progress no longer lines up, so it starts over)
     if (d.menuVer !== MENU_VER) {
-      const fresh = DAY_MENUS.find(m => m.name === s.cfg.rest.menu);
+      const fresh = PLAN_MENUS.find(m => m.name === s.cfg.rest.menu);
       if (fresh) s.cfg.rest.items = clone(fresh.cfg.items);
       // the edits kept for the plan's day menus were made on the old plan
-      if (s.menus) DAY_MENUS.forEach(m => { delete s.menus[m.name]; });
+      if (s.menus) PLAN_MENUS.forEach(m => { delete s.menus[m.name]; });
       if (s.run && s.run.day === today()) delete s.run;
     }
   }
@@ -760,6 +770,8 @@ const items = () => restCfg().items;
 function saveRun() {
   store.run = { day: today(), menu: restCfg().menu || '', item: R.item, done: R.done.slice(), holds: R.holds.map(a => a.slice()), finished: R.phase === 'done',
     phase: R.phase, restStart: R.restStart, restDur: R.restDur, workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, side: R.side, sideRest: R.sideRest, startedAt: R.startedAt, endedAt: R.endedAt };
+  // a skill menu run later the same day replaces the run, so the PPL day that had sets done is kept on its own
+  if (ORDER.includes(store.run.menu) && R.done.some(n => n > 0)) store.pplDone = { day: store.run.day, menu: store.run.menu };
   save();
 }
 // undo: each step the user takes is kept, so a mistaken tap can be taken back one at a time
@@ -1386,7 +1398,8 @@ function initRest() {
     else if (run.phase === 'hold' && run.holdStart) { Object.assign(R, { phase: 'hold', holdStart: run.holdStart, started: true }); }
     syncDone(); return;
   }
-  if (run && run.day !== today() && (run.done || []).some(n => n > 0)) store.lastMenu = run.menu;
+  if (run && run.day !== today() && (run.done || []).some(n => n > 0) && ORDER.includes(run.menu)) store.lastMenu = run.menu;
+  if (store.pplDone && store.pplDone.day !== today()) store.lastMenu = store.pplDone.menu;
   const next = run && run.day !== today() && nextInOrder(store.lastMenu);
   if (next && next.name !== c.menu) { switchMenu(next); setTimeout(() => toast(`今日は ${next.name}（前回は ${store.lastMenu}）`), 600); return; }
   resetRest();
