@@ -108,6 +108,19 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 .tabs::-webkit-scrollbar{display:none}
 /* inside the Obsidian training note: only the rest timer, so the brand and the mode tabs give their room to the timer */
 .embed .brand,.embed .tabs{display:none}
+/* a short frame (the training note on a phone puts ORBIT under the page): only the label, the time, one line and the buttons */
+@media (max-height:480px){
+  :root.embed{--U:min(100vw, 48vh, 560px)!important}
+  .embed .guide,.embed .cap,.embed .katana,.embed .grove,.embed .next,.embed .laps,.embed .presets,.embed .leads{display:none!important}
+  .embed .main{gap:2px;padding-top:0}
+  .embed .phase{font-size:15px;min-height:0;gap:6px}
+  .embed .sub{font-size:13px}
+  .embed .foot{padding-top:2px;gap:4px}
+  .embed .ctl{font-size:11px;gap:2px}
+  .embed .ctl .b{width:44px;height:44px}
+  .embed .ctl.main .b{width:58px;height:58px}
+  .embed .ctl.main .b svg{width:24px;height:24px}
+}
 .tab{flex:1 0 auto;min-height:44px;padding:0 6px;border:0;border-bottom:2px solid transparent;background:none;color:#d4cec7;font-weight:700;font-size:13px;letter-spacing:.02em;white-space:nowrap;text-shadow:0 1px 6px #000;transition:color .3s,border-color .3s}
 .tab b{font-weight:700;margin-left:4px;color:var(--gold);font-variant-numeric:tabular-nums}
 .tab b:empty{display:none}
