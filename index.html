@@ -789,9 +789,17 @@ const history = [];
 const snap = () => ({ phase: R.phase, item: R.item, done: R.done.slice(), holds: R.holds.map(a => a.slice()), restStart: R.restStart, restDur: R.restDur,
   workStart: R.workStart, workDur: R.workDur, holdStart: R.holdStart, side: R.side, sideRest: R.sideRest, started: R.started });
 function remember() { history.push(snap()); if (history.length > 30) history.shift(); }
+// embedded in the Obsidian training note (Set Stepper): each finished set is told to the note, which writes the time on that set
+const EMBED = window.parent !== window;
+function tell(type, extra) {
+  if (!EMBED) return;
+  try { parent.postMessage(Object.assign({ src: 'orbit', type, menu: restCfg().menu || '', at: Date.now() }, extra), '*'); } catch (e) {}
+}
 function undo() {
   const s = history.pop(); if (!s) return;
   if (striking) { clearTimeout(striking); striking = 0; app.classList.remove('strike'); }
+  const back = R.done.findIndex((n, i) => n > (s.done[i] || 0));
+  if (back >= 0) tell('set-undo', { item: back, name: items()[back].name, set: R.done[back] });
   Object.assign(R, s, { done: s.done.slice(), holds: s.holds.map(a => a.slice()), beep: '' }); syncDone();
   // a rest whose time ran out while it was undone ends normally on the next tick
   last.scene = ''; saveRun();
@@ -852,6 +860,8 @@ function completeSet(byHand = true) {
   if (byHand) remember();
   if (R.phase === 'ready' && items()[R.item].work > 0) { startWork(); return; }
   R.done[R.item]++; R.started = true; R.startedAt = R.startedAt || Date.now();
+  { const it = items()[R.item], h = R.holds[R.item];
+    tell('set-done', { item: R.item, name: it.name, set: R.done[R.item], hold: it.hold && !it.sides && h.length ? h[h.length - 1] : null }); }
   if (byHand && undoHints < 2) { undoHints++; setTimeout(() => toast('間違えた時は、右上の「戻す」で取り消せます'), 1400); }
   const finished = allDone();
   strike(finished);
@@ -1763,6 +1773,10 @@ function frame() { logic(); render(); stepLeaves(); requestAnimationFrame(frame)
 setInterval(logic, 250); // keeps phases advancing when animation frames are throttled
 
 applyWorld(); rebuild(); initRest(); renderTabs(); renderPresets(); render(); requestAnimationFrame(frame);
+// opened from the training note with ?menu=Push A: the rest timer takes that day's menu (the same day's progress is kept)
+{ const want = new URLSearchParams(location.search).get('menu'), c = restCfg();
+  const p = want && PRESETS.rest.find(m => (m.cfg.menu || m.name) === want);
+  if (p && c.menu !== want) { switchMenu(p); toast(`今日は ${p.name}`); } }
 
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) {}
