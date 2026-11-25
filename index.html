@@ -106,6 +106,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-o
 #undoBtn{border-color:var(--gold);color:var(--gold)}
 .tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;margin-inline:-4px;padding-inline:0}
 .tabs::-webkit-scrollbar{display:none}
+/* inside the Obsidian training note: only the rest timer, so the brand and the mode tabs give their room to the timer */
+.embed .brand,.embed .tabs{display:none}
 .tab{flex:1 0 auto;min-height:44px;padding:0 6px;border:0;border-bottom:2px solid transparent;background:none;color:#d4cec7;font-weight:700;font-size:13px;letter-spacing:.02em;white-space:nowrap;text-shadow:0 1px 6px #000;transition:color .3s,border-color .3s}
 .tab b{font-weight:700;margin-left:4px;color:var(--gold);font-variant-numeric:tabular-nums}
 .tab b:empty{display:none}
@@ -1774,6 +1776,7 @@ setInterval(logic, 250); // keeps phases advancing when animation frames are thr
 
 applyWorld(); rebuild(); initRest(); renderTabs(); renderPresets(); render(); requestAnimationFrame(frame);
 // opened from the training note with ?menu=Push A: the rest timer takes that day's menu (the same day's progress is kept)
+if (EMBED) { document.documentElement.classList.add('embed'); if (store.mode !== 'rest') { store.mode = 'rest'; save(); rebuild(); renderTabs(); renderPresets(); render(); } }
 { const want = new URLSearchParams(location.search).get('menu'), c = restCfg();
   const p = want && PRESETS.rest.find(m => (m.cfg.menu || m.name) === want);
   if (p && c.menu !== want) { switchMenu(p); toast(`今日は ${p.name}`); } }
